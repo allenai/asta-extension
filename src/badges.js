@@ -1,11 +1,24 @@
 // TODO: (dom) look into deduplicating common extractors, loops, and styles.
 import queryString from 'query-string'
 import * as sciteBadge from './badge/main'
-import { matchReference } from './reference-matching'
+import { matchReference, matchReferenceS2Batch } from './reference-matching'
 import { sliceIntoChunks } from './util'
 
-function createBadge (doi) {
-  return `<div class="scite-badge scite-extension-badge" data-doi="${doi}" data-layout="horizontal" data-small="true" data-tooltip-placement="none" />`
+function createBadge (corpusId) {
+  return `
+    <div>
+      <a href="https://api.semanticscholar.org/CorpusId:${corpusId}" target="_blank" style="text-decoration: none;">
+        <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
+          Open Paper Details Page
+        </button>
+      </a>
+      <a href="https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=popup" target="_blank" style="text-decoration: none;">
+        <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
+          Ask about this paper
+        </button>
+      </a>
+    </div>
+  `
 }
 
 function removeElementsByQuery (query, parentEl = document) {
@@ -1389,10 +1402,10 @@ export default async function insertBadges () {
   }
 
   const refsToResolve = []
-  const badges = []
+  const badgesWithDOIs = []
   for (const el of els) {
     if (el.doi) {
-      badges.push(el)
+      badgesWithDOIs.push(el)
     } else {
       refsToResolve.push(el)
     }
@@ -1406,7 +1419,7 @@ export default async function insertBadges () {
     await Promise.all(batch.map(async el => {
       const result = await matchReference(el.reference)
       if (result?.matched && result?.doi) {
-        badges.push({
+        badgesWithDOIs.push({
           ...el,
           doi: result.doi
         })
@@ -1414,9 +1427,30 @@ export default async function insertBadges () {
     }))
   }
 
+  const badges = []
+
+  const jobs2 = sliceIntoChunks(badgesWithDOIs, 20)
+  for (const batch of jobs2) {
+    const result = await matchReferenceS2Batch({
+      paperIds: batch.map(badge => `DOI:${badge.doi}`),
+      fields: 'corpusId',
+    })
+    // check that result is an array and it is the smae length as batch
+    if (Array.isArray(result) && result.length === batch.length) {
+      for (let i = 0; i < result.length; i++) {
+        if (result[i] && result[i].corpusId) {
+          badges.push({
+            ...batch[i],
+            corpusId: result[i].corpusId
+          })
+        }
+      }
+    }
+  }
+
   removeElementsByQuery('.scite-extension-badge')
   for (const badge of badges) {
-    badge.citeEl.insertAdjacentHTML(badgeSite.position, createBadge(badge.doi.toLowerCase()?.trim()))
+    badge.citeEl.insertAdjacentHTML(badgeSite.position, createBadge(badge.corpusId))
   }
 
   const range = document.createRange()

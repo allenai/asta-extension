@@ -1,7 +1,7 @@
 {
-  "name": "scite-extension",
-  "version": "1.36.5",
-  "description": "scite allow users to see how a scientific paper has been cited by providing the context of the citation and a classification describing whether it provides supporting or contrasting evidence for the cited claim",
+  "name": "nora-extension",
+  "version": "0.0.5",
+  "description": "Nora the assistant can detect and provide help with papers.",
   "main": "index.js",
   "scripts": {
     "lint": "standard --verbose | snazzy && stylelint 'src/**/*.css'",
@@ -20,10 +20,9 @@
     "webextensions",
     "chrome",
     "firefox",
-    "scite",
-    "citations"
+    "assistant"
   ],
-  "author": "Milo Mordaunt <milo@scite.ai>",
+  "author": "Allen Institute for AI",
   "license": "MIT",
   "devDependencies": {
     "@swc/core": "^1.3.52",

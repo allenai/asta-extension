@@ -1,3 +1,7 @@
+# Nora Extension
+
+The remainder of the readme is the original readme from the [scite extension](https://github.com/scitedotai/scite-extension). The Nora extension is a fork of the scite extension.
+
 # Scite Badge and Extension #
 
 ## Issues or Feature Requests ##

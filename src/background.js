@@ -6,9 +6,15 @@ if (typeof chrome !== 'undefined' && chrome) {
 browser.runtime.onInstalled.addListener(function (details) {
   if (details.reason === 'install') {
     browser.tabs.create({
-      url: 'https://scite.ai/extension-install'
+      url: 'https://nora.allen.ai/chat?utm_source=extension&utm_medium=install'
     })
   }
+})
+
+browser.action.onClicked.addListener(function (tab) {
+  browser.tabs.create({
+    url: 'https://nora.allen.ai/chat?utm_source=extension&utm_medium=button_click'
+  })
 })
 
 function onCreated () {
@@ -20,20 +26,20 @@ function onCreated () {
 }
 
 browser.contextMenus.create({
-  id: 'scite-citation-search',
-  title: 'Ask scite.ai assistant',
+  id: 'nora',
+  title: 'Ask Nora',
   contexts: ['selection']
 }, onCreated)
 
 browser.contextMenus.onClicked.addListener(function (info, tab) {
-  if (info.menuItemId === 'scite-citation-search') {
+  if (info.menuItemId === 'nora') {
     if (info.selectionText) {
       const encodedSelection = encodeURIComponent(
         `${info.selectionText}`
       )
 
       browser.tabs.create({
-        url: `https://scite.ai/assistant?startTerm=${encodedSelection}&utm_source=generic&utm_medium=plugin&utm_campaign=plugin-citation-search`
+        url: `https://nora.allen.ai/chat?query=${encodedSelection}&utm_source=extension&utm_medium=context`
       })
     }
   }
