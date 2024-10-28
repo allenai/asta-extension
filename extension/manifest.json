@@ -1,9 +1,9 @@
 {
-  "name": "Scite",
-  "author": "Scite Inc.",
-  "version": "1.36.3",
+  "name": "Nora",
+  "author": "Allen Institute for AI",
+  "version": "0.0.5",
   "manifest_version": 3,
-  "description": "scite allows users to see how a publication has been cited, providing the citation context and classification",
+  "description": "Nora the assistant can detect and provide help with papers.",
   "icons": {
     "16": "images/icons/16.png",
     "32": "images/icons/32.png",
@@ -13,6 +13,18 @@
     "256": "images/icons/256.png",
     "512": "images/icons/512.png",
     "1024": "images/icons/1024.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "images/icons/16.png",
+      "32": "images/icons/32.png",
+      "48": "images/icons/48.png",
+      "64": "images/icons/64.png",
+      "128": "images/icons/128.png",
+      "256": "images/icons/256.png",
+      "512": "images/icons/512.png",
+      "1024": "images/icons/1024.png"
+    }
   },
   "content_scripts": [
     {
@@ -30,13 +42,7 @@
   "background": {
     "service_worker": "background.js"
   },
-  "externally_connectable": {
-    "matches": [
-      "*://*.scite.ai/*",
-      "*://localhost/*"
-    ]
-  },
-  "permissions": [
+ "permissions": [
     "contextMenus",
     "storage"
   ],
@@ -52,6 +58,7 @@
   ],
   "content_security_policy": {},
   "host_permissions": [
-    "https://api.scite.ai/*"
+    "https://api.scite.ai/*",
+    "https://api.semanticscholar.org/*"
   ]
 }

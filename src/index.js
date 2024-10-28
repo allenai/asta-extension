@@ -12,7 +12,7 @@ import Tally from './components/Tally'
 import TallyLoader from './components/TallyLoader'
 import styles from './styles.css'
 import insertBadges from './badges'
-import { matchReference } from './reference-matching'
+import { matchReference, matchReferenceS2Batch } from './reference-matching'
 import { parsePDFForTitleandAuthor } from './pdf'
 
 /* global chrome, browser:true */
@@ -33,6 +33,11 @@ const IS_DEV = typeof process !== 'undefined' && process.NODE_ENV === 'developme
 const devLog = IS_DEV ? console.log.bind(window) : function () { }
 
 const DOI_REGEX = /(10.\d{4,9}\/[-._;()/:A-Z0-9]+)/ig
+const S2_ID_Prefixes = [
+  'arxiv',
+  'corpusid'
+]
+const hasS2Prefix = (doi) => S2_ID_Prefixes.some(v => doi && doi.toLowerCase().startsWith(`${v}:`))
 
 // Single-page apps take a while to fully load all the HTML,
 // and until they do we can't find the DOI
@@ -48,7 +53,8 @@ const LONG_DELAY_HOSTS = [
   'europepmc.org',
   'orcid.org',
   'connectedpapers.com',
-  'lens.org'
+  'lens.org',
+  'www.semanticscholar.org'
 ]
 
 const SCITE_HOSTS = [
@@ -92,6 +98,7 @@ function runRegexOnDoc (re, host) {
 // most scholarly articles have some kind of DOI meta
 // tag in the head of the document. Check these.
 function findDoiFromMetaTags () {
+  // TODO: Rename. Not just DOI.
   // collection of the various ways different publishers may
   // indicate a given meta tag has the DOI.
   const doiMetaNames = [
@@ -112,6 +119,13 @@ function findDoiFromMetaTags () {
 
     if (!name) {
       return true // keep iterating
+    }
+
+    // Special case for arxiv
+    if (name === 'citation_arxiv_id') {
+      const arxivIdCandidate = myMeta.content.toLowerCase().replace('arxiv:', '').trim()
+      doi = 'ARXIV:'.concat(arxivIdCandidate);
+      return true // continue iterating
     }
 
     // has to be a meta name likely to contain a DOI
@@ -219,9 +233,16 @@ function findDoiFromPsycnet () {
 }
 
 function findDoiFromSemanticScholar () {
+  // TODO: not just doi
   // example: https://www.semanticscholar.org/paper/ProofWriter%3A-Generating-Implications%2C-Proofs%2C-and-Tafjord-Dalvi/87c45a908537ffe1d2ab71a5d609bd7b4efa4fe1
   if (myHost.indexOf('www.semanticscholar.org') < 0) {
     return null
+  }
+
+  const corpusIdLink = document.querySelector('[data-test-id="corpus-id"]');
+  const corpusIdCandidate = corpusIdLink?.textContent.replace(/\D/g, '');
+  if (corpusIdCandidate) {
+    return 'CorpusId:'.concat(corpusIdCandidate);
   }
 
   const doiLinkElem = document.querySelector('.doi__link')
@@ -293,6 +314,7 @@ function findDoiFromWOS () {
 }
 
 async function findDoi () {
+  // TODO: Rename. Not just DOI.
   // we try each of these functions, in order, to get a DOI from the page.
   const doiFinderFunctions = [
     findDoiFromADS,
@@ -314,13 +336,18 @@ async function findDoi () {
     const myDoi = doiFinderFunctions[i]()
     if (myDoi && `${myDoi}`.startsWith('10.')) {
       // if we find a good DOI, stop looking
+      return `DOI:${myDoi}`
+    } else if (hasS2Prefix(myDoi)) {
       return myDoi
     }
   }
-  return await findDoiFromPDF()
+  const doi = await findDoiFromPDF()
+  if (doi) {
+    return `DOI:${doi}`
+  }
 }
 
-async function popupDoi (doi) {
+async function popupDoi (corpusId) {
   const popup = document.createElement('div')
   popup.id = 'scite-popup'
   if (poppedUp) {
@@ -333,18 +360,20 @@ async function popupDoi (doi) {
 
   document.documentElement.appendChild(popup)
   render(
-    (
-      <HideableTally
-        hide={shouldHide} clickFn={() =>
-          setStorageItem({ hidePopup: !shouldHide })}
-      >
-        <TallyLoader doi={doi}>
-          {({ tally, notices }) => (
-            <Tally tally={tally} notices={notices} />
-          )}
-        </TallyLoader>
-      </HideableTally>
-    ),
+    <HideableTally>
+      <div style={{ maxWidth: '200px'}}>
+        <a href={`https://api.semanticscholar.org/CorpusId:${corpusId}`} target="_blank" style={{ textDecoration: 'none' }}>
+          <button style={{ padding: '5px 5px', color: 'black', border: '2px solid #f0529c', borderRadius: '50px', cursor: 'pointer' }}>
+            Open Paper Details Page
+          </button>
+        </a>
+        <a href={`https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=popup`} target="_blank" style={{ textDecoration: 'none' }}>
+          <button style={{ padding: '5px 5px', color: 'black', border: '2px solid #f0529c', borderRadius: '50px', cursor: 'pointer' }}>
+            Ask about this paper
+          </button>
+        </a>
+      </div>
+    </HideableTally>,
     popup
   )
   poppedUp = true
@@ -387,7 +416,13 @@ async function main () {
     return
   }
 
-  await popupDoi(doi)
+  const result = await matchReferenceS2Batch(
+    { paperIds: [doi], fields: 'corpusId' }
+  )
+
+  if (result && result[0] && result[0].corpusId) {
+    await popupDoi(result[0].corpusId)
+  }
 }
 
 let timeoutID = null
