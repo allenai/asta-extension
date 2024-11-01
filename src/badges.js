@@ -12,7 +12,7 @@ function createBadge (corpusId) {
           Open Paper Details Page
         </button>
       </a>
-      <a href="https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=popup" target="_blank" style="text-decoration: none;">
+      <a href="https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none;">
         <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
           Ask about this paper
         </button>
