@@ -367,7 +367,7 @@ async function popupDoi (corpusId) {
             Open Paper Details Page
           </button>
         </a>
-        <a href={`https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=popup`} target="_blank" style={{ textDecoration: 'none' }}>
+        <a href={`https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2`} target="_blank" style={{ textDecoration: 'none' }}>
           <button style={{ padding: '5px 5px', color: 'black', border: '2px solid #f0529c', borderRadius: '50px', cursor: 'pointer' }}>
             Ask about this paper
           </button>
