@@ -7,11 +7,6 @@ import { sliceIntoChunks } from './util'
 function createBadge (corpusId) {
   return `
     <div>
-      <a href="https://api.semanticscholar.org/CorpusId:${corpusId}" target="_blank" style="text-decoration: none;">
-        <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
-          Open Paper Details Page
-        </button>
-      </a>
       <a href="https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2" target="_blank" style="text-decoration: none;">
         <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
           Ask about this paper
