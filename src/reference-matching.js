@@ -92,8 +92,8 @@ export const checkShowable = async (corpusid) => {
   try {
     const result = await fetch(url)
     const data = await result.json()
-    if (data && data.showable) {
-      return data.showable
+    if (data) {
+      return data
     }
   } catch (e) {
     return null

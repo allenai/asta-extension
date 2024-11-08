@@ -1449,7 +1449,7 @@ export default async function insertBadges () {
     await Promise.all(batch.map(async badge => {
       const result = await checkShowable(badge.corpusId)
       if (result) {
-        badge.showable = true
+        badge.showable = result.showable
       }
     })
     )
@@ -1457,7 +1457,7 @@ export default async function insertBadges () {
 
   removeElementsByQuery('.scite-extension-badge')
   for (const badge of badges) {
-    if (!badge.showable) {
+    if (badge.showable === false) {
       continue
     }
     badge.citeEl.insertAdjacentHTML(badgeSite.position, createBadge(badge.corpusId))
