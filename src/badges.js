@@ -1,18 +1,13 @@
 // TODO: (dom) look into deduplicating common extractors, loops, and styles.
 import queryString from 'query-string'
 import * as sciteBadge from './badge/main'
-import { matchReference, matchReferenceS2Batch } from './reference-matching'
+import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './reference-matching'
 import { sliceIntoChunks } from './util'
 
 function createBadge (corpusId) {
   return `
     <div>
-      <a href="https://api.semanticscholar.org/CorpusId:${corpusId}" target="_blank" style="text-decoration: none;">
-        <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
-          Open Paper Details Page
-        </button>
-      </a>
-      <a href="https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none;">
+      <a href="https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2" target="_blank" style="text-decoration: none;">
         <button style="padding: 5px 5px; color: black; border: 2px solid #f0529c; border-radius: 50px; cursor: pointer;">
           Ask about this paper
         </button>
@@ -1411,23 +1406,23 @@ export default async function insertBadges () {
     }
   }
 
+  const badges = []
+
   //
   // Resolve references up to 20 at a time
   //
   const jobs = sliceIntoChunks(refsToResolve, 20)
   for (const batch of jobs) {
     await Promise.all(batch.map(async el => {
-      const result = await matchReference(el.reference)
-      if (result?.matched && result?.doi) {
-        badgesWithDOIs.push({
+      const result = await matchReferenceS2(el.reference)
+      if (result?.corpusId) {
+        badges.push({
           ...el,
-          doi: result.doi
+          corpusId: result.corpusId
         })
       }
     }))
   }
-
-  const badges = []
 
   const jobs2 = sliceIntoChunks(badgesWithDOIs, 20)
   for (const batch of jobs2) {
@@ -1448,8 +1443,23 @@ export default async function insertBadges () {
     }
   }
 
+  // Check showable badges 20 at a times
+  const jobs3 = sliceIntoChunks(badges, 20)
+  for (const batch of jobs3) {
+    await Promise.all(batch.map(async badge => {
+      const result = await checkShowable(badge.corpusId)
+      if (result) {
+        badge.showable = result.showable
+      }
+    })
+    )
+  }
+
   removeElementsByQuery('.scite-extension-badge')
   for (const badge of badges) {
+    if (badge.showable === false) {
+      continue
+    }
     badge.citeEl.insertAdjacentHTML(badgeSite.position, createBadge(badge.corpusId))
   }
 
