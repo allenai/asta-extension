@@ -12,7 +12,7 @@ import Tally from './components/Tally'
 import TallyLoader from './components/TallyLoader'
 import styles from './styles.css'
 import insertBadges from './badges'
-import { matchReference, matchReferenceS2Batch } from './reference-matching'
+import { matchReferenceS2, matchReferenceS2Batch } from './reference-matching'
 import { parsePDFForTitleandAuthor } from './pdf'
 
 /* global chrome, browser:true */
@@ -299,8 +299,8 @@ async function findDoiFromPDF () {
       return titleAndAuthor.doi
     }
     if (titleAndAuthor.title) {
-      const { doi } = await matchReference(titleAndAuthor)
-      return doi
+      const { corpusId } = await matchReferenceS2(titleAndAuthor)
+      return `CorpusId:${corpusId}`
     }
   }
 }
@@ -343,7 +343,7 @@ async function findDoi () {
   }
   const doi = await findDoiFromPDF()
   if (doi) {
-    return `DOI:${doi}`
+    return doi
   }
 }
 
@@ -411,9 +411,16 @@ async function main () {
     return
   }
 
-  const result = await matchReferenceS2Batch(
-    { paperIds: [doi], fields: 'corpusId' }
-  )
+  let result = null;
+  console.log(`DOI: ${doi}`)
+  if (doi.toLowerCase().startsWith('corpusid:')) {
+    const id = doi.replace('corpusId:', '')
+    result = [{ corpusId: id }]
+  } else {
+    result = await matchReferenceS2Batch(
+      { paperIds: [doi], fields: 'corpusId' }
+    )
+  }
 
   if (result && result[0] && result[0].corpusId) {
     await popupDoi(result[0].corpusId)
