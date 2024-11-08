@@ -12,7 +12,7 @@ import Tally from './components/Tally'
 import TallyLoader from './components/TallyLoader'
 import styles from './styles.css'
 import insertBadges from './badges'
-import { matchReference, matchReferenceS2Batch } from './reference-matching'
+import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './reference-matching'
 import { parsePDFForTitleandAuthor } from './pdf'
 
 /* global chrome, browser:true */
@@ -299,8 +299,8 @@ async function findDoiFromPDF () {
       return titleAndAuthor.doi
     }
     if (titleAndAuthor.title) {
-      const { doi } = await matchReference(titleAndAuthor)
-      return doi
+      const { corpusId } = await matchReferenceS2(titleAndAuthor)
+      return `CorpusId:${corpusId}`
     }
   }
 }
@@ -343,7 +343,7 @@ async function findDoi () {
   }
   const doi = await findDoiFromPDF()
   if (doi) {
-    return `DOI:${doi}`
+    return doi
   }
 }
 
@@ -362,12 +362,7 @@ async function popupDoi (corpusId) {
   render(
     <HideableTally>
       <div style={{ maxWidth: '200px'}}>
-        <a href={`https://api.semanticscholar.org/CorpusId:${corpusId}`} target="_blank" style={{ textDecoration: 'none' }}>
-          <button style={{ padding: '5px 5px', color: 'black', border: '2px solid #f0529c', borderRadius: '50px', cursor: 'pointer' }}>
-            Open Paper Details Page
-          </button>
-        </a>
-        <a href={`https://nora.allen.ai/chat?query=ask%20about%20corpusid:${corpusId}&utm_source=extension&utm_medium=popup`} target="_blank" style={{ textDecoration: 'none' }}>
+        <a href={`https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2`} target="_blank" style={{ textDecoration: 'none' }}>
           <button style={{ padding: '5px 5px', color: 'black', border: '2px solid #f0529c', borderRadius: '50px', cursor: 'pointer' }}>
             Ask about this paper
           </button>
@@ -416,11 +411,21 @@ async function main () {
     return
   }
 
-  const result = await matchReferenceS2Batch(
-    { paperIds: [doi], fields: 'corpusId' }
-  )
+  let result = null;
+  if (doi.toLowerCase().startsWith('corpusid:')) {
+    const id = doi.replace(/corpusid:/i, '')
+    result = [{ corpusId: id }]
+  } else {
+    result = await matchReferenceS2Batch(
+      { paperIds: [doi], fields: 'corpusId' }
+    )
+  }
 
   if (result && result[0] && result[0].corpusId) {
+    const showableResult = await checkShowable(result[0].corpusId)
+    if (showableResult && showableResult.showable === false) {
+      return
+    }
     await popupDoi(result[0].corpusId)
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "Nora",
   "author": "Allen Institute for AI",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "manifest_version": 3,
   "description": "Nora the assistant can detect and provide help with papers.",
   "icons": {
@@ -59,6 +59,7 @@
   "content_security_policy": {},
   "host_permissions": [
     "https://api.scite.ai/*",
-    "https://api.semanticscholar.org/*"
+    "https://api.semanticscholar.org/*",
+    "https://*.allen.ai/*"
   ]
 }
