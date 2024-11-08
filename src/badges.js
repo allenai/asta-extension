@@ -1,7 +1,7 @@
 // TODO: (dom) look into deduplicating common extractors, loops, and styles.
 import queryString from 'query-string'
 import * as sciteBadge from './badge/main'
-import { matchReferenceS2, matchReferenceS2Batch } from './reference-matching'
+import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './reference-matching'
 import { sliceIntoChunks } from './util'
 
 function createBadge (corpusId) {
@@ -1443,8 +1443,23 @@ export default async function insertBadges () {
     }
   }
 
+  // Check showable badges 20 at a times
+  const jobs3 = sliceIntoChunks(badges, 20)
+  for (const batch of jobs3) {
+    await Promise.all(batch.map(async badge => {
+      const result = await checkShowable(badge.corpusId)
+      if (result) {
+        badge.showable = true
+      }
+    })
+    )
+  }
+
   removeElementsByQuery('.scite-extension-badge')
   for (const badge of badges) {
+    if (!badge.showable) {
+      continue
+    }
     badge.citeEl.insertAdjacentHTML(badgeSite.position, createBadge(badge.corpusId))
   }
 

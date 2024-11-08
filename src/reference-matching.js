@@ -80,3 +80,22 @@ export const matchReferenceS2Batch = async ({
     return null
   }
 }
+
+export const checkShowable = async (corpusid) => {
+  if (!corpusid) {
+    return null
+  }
+
+  const { fetch } = window
+  const url = new URL(`https://mage.allen.ai/isShowable/${corpusid}`)
+
+  try {
+    const result = await fetch(url)
+    const data = await result.json()
+    if (data && data.showable) {
+      return data.showable
+    }
+  } catch (e) {
+    return null
+  }
+}
