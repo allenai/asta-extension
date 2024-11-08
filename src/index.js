@@ -413,7 +413,7 @@ async function main () {
 
   let result = null;
   if (doi.toLowerCase().startsWith('corpusid:')) {
-    const id = doi.replace('corpusId:', '')
+    const id = doi.replace(/corpusid:/i, '')
     result = [{ corpusId: id }]
   } else {
     result = await matchReferenceS2Batch(
@@ -422,8 +422,8 @@ async function main () {
   }
 
   if (result && result[0] && result[0].corpusId) {
-    const showable = await checkShowable(result[0].corpusId)
-    if (!showable) {
+    const showableResult = await checkShowable(result[0].corpusId)
+    if (showableResult && showableResult.showable === false) {
       return
     }
     await popupDoi(result[0].corpusId)
