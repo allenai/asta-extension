@@ -1,7 +1,7 @@
 // TODO: (dom) look into deduplicating common extractors, loops, and styles.
 import queryString from 'query-string'
 import * as sciteBadge from './badge/main'
-import { matchReference, matchReferenceS2Batch } from './reference-matching'
+import { matchReferenceS2, matchReferenceS2Batch } from './reference-matching'
 import { sliceIntoChunks } from './util'
 
 function createBadge (corpusId) {
@@ -1406,23 +1406,23 @@ export default async function insertBadges () {
     }
   }
 
+  const badges = []
+
   //
   // Resolve references up to 20 at a time
   //
   const jobs = sliceIntoChunks(refsToResolve, 20)
   for (const batch of jobs) {
     await Promise.all(batch.map(async el => {
-      const result = await matchReference(el.reference)
-      if (result?.matched && result?.doi) {
-        badgesWithDOIs.push({
+      const result = await matchReferenceS2(el.reference)
+      if (result?.corpusId) {
+        badges.push({
           ...el,
-          doi: result.doi
+          corpusId: result.corpusId
         })
       }
     }))
   }
-
-  const badges = []
 
   const jobs2 = sliceIntoChunks(badgesWithDOIs, 20)
   for (const batch of jobs2) {
