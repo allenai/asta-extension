@@ -12,7 +12,7 @@ import Tally from './components/Tally'
 import TallyLoader from './components/TallyLoader'
 import styles from './styles.css'
 import insertBadges from './badges'
-import { matchReferenceS2, matchReferenceS2Batch } from './reference-matching'
+import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './reference-matching'
 import { parsePDFForTitleandAuthor } from './pdf'
 
 /* global chrome, browser:true */
@@ -412,7 +412,6 @@ async function main () {
   }
 
   let result = null;
-  console.log(`DOI: ${doi}`)
   if (doi.toLowerCase().startsWith('corpusid:')) {
     const id = doi.replace('corpusId:', '')
     result = [{ corpusId: id }]
@@ -423,6 +422,10 @@ async function main () {
   }
 
   if (result && result[0] && result[0].corpusId) {
+    const showable = await checkShowable(result[0].corpusId)
+    if (!showable) {
+      return
+    }
     await popupDoi(result[0].corpusId)
   }
 }

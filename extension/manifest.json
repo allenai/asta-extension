@@ -59,6 +59,7 @@
   "content_security_policy": {},
   "host_permissions": [
     "https://api.scite.ai/*",
-    "https://api.semanticscholar.org/*"
+    "https://api.semanticscholar.org/*",
+    "https://*.allen.ai/*"
   ]
 }
