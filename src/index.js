@@ -361,10 +361,10 @@ async function popupDoi (corpusId) {
   document.documentElement.appendChild(popup)
   render(
     <HideableTally>
-      <div style={{ maxWidth: '200px'}}>
+      <div style={{ maxWidth: '200px', padding:'8px'}}>
         <a href={`https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2&utm_source=extension&utm_medium=paper`} target="_blank" style={{ textDecoration: 'none' }}>
-          <button style={{ padding: '5px 5px', color: 'black', border: '2px solid #f0529c', borderRadius: '50px', cursor: 'pointer' }}>
-            Ask about this paper
+          <button style={{ padding: '4px 8px', color: '#f0529c', border: '1px solid #f0529c', backgroundColor: '#ffffff', borderRadius: '4px', cursor: 'pointer', fontFamily: 'manrope, arial, sans-serif' }}>
+            Ask Nora about this paper
           </button>
         </a>
       </div>
