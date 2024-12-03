@@ -1,6 +1,6 @@
 {
   "name": "nora-extension",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Nora the assistant can detect and provide help with papers.",
   "main": "index.js",
   "scripts": {
