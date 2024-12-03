@@ -1,7 +1,7 @@
 {
   "name": "Nora",
   "author": "Allen Institute for AI",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "manifest_version": 3,
   "description": "Nora the assistant can detect and provide help with papers.",
   "icons": {
