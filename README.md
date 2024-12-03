@@ -176,10 +176,11 @@ $ zip -r extension.zip extension/*
 ```
 
 1. Go to the [developer dashboard](https://chrome.google.com/webstore/developer/dashboard)
-2. Click on the extension (if you do not see it check you are looking at the right `scite` publisher in the top right)
-3. Click `package` on the left
-4. Click upload new package
-5. Click submit for review
+2. Login as s2-shared@allenai.org
+3. Click on the extension (if you do not see it check you are looking at the right `scite` publisher in the top right)
+4. Click `package` on the left
+5. Click upload new package
+6. Click submit for review
 
 ### Firefox ###
 
