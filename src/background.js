@@ -44,3 +44,30 @@ browser.contextMenus.onClicked.addListener(function (info, tab) {
     }
   }
 })
+
+// Fetch proxy for content scripts (CORS workaround)
+// Content scripts can't use host_permissions, so they send requests here
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'FETCH') {
+    fetch(request.url, request.options)
+      .then(response => {
+        return response.json().then(data => ({
+          ok: response.ok,
+          status: response.status,
+          data
+        })).catch(() => {
+          // If JSON parsing fails, still return response info
+          return {
+            ok: response.ok,
+            status: response.status,
+            data: null
+          }
+        })
+      })
+      .then(sendResponse)
+      .catch(error => {
+        sendResponse({ ok: false, status: 0, error: error.message })
+      })
+    return true // Keep message channel open for async response
+  }
+})

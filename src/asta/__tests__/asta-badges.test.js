@@ -117,3 +117,73 @@ describe('Badge showability filtering', () => {
     expect(filteredBadges).toHaveLength(0)
   })
 })
+
+describe('Deduplication logic', () => {
+  it('skips exact duplicate papers', () => {
+    const papers = [
+      { title: 'Attention Is All You Need' },
+      { title: 'Attention Is All You Need' }, // Exact duplicate
+      { title: 'BERT: Pre-training of Deep Bidirectional Transformers' }
+    ]
+
+    const seen = new Set()
+    const unique = []
+
+    for (const paper of papers) {
+      const key = paper.title || ''
+      if (key && !seen.has(key)) {
+        seen.add(key)
+        unique.push(paper)
+      }
+    }
+
+    // Should deduplicate exact match
+    expect(unique).toHaveLength(2)
+    expect(seen.size).toBe(2)
+  })
+
+  it('keeps different papers', () => {
+    const papers = [
+      { title: 'Attention Is All You Need' },
+      { title: 'BERT: Pre-training of Deep Bidirectional Transformers' },
+      { title: 'GPT-3: Language Models are Few-Shot Learners' }
+    ]
+
+    const seen = new Set()
+    const unique = []
+
+    for (const paper of papers) {
+      const key = paper.title || ''
+      if (key && !seen.has(key)) {
+        seen.add(key)
+        unique.push(paper)
+      }
+    }
+
+    // All 3 papers are different
+    expect(unique).toHaveLength(3)
+    expect(seen.size).toBe(3)
+  })
+
+  it('skips exact duplicate DOIs', () => {
+    const papers = [
+      { doi: '10.1234/test.doi' },
+      { doi: '10.1234/test.doi' }, // Exact duplicate
+      { doi: '10.5678/other.doi' }
+    ]
+
+    const seen = new Set()
+    const unique = []
+
+    for (const paper of papers) {
+      const key = paper.doi || ''
+      if (key && !seen.has(key)) {
+        seen.add(key)
+        unique.push(paper)
+      }
+    }
+
+    expect(unique).toHaveLength(2)
+    expect(seen.size).toBe(2)
+  })
+})
