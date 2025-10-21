@@ -40,7 +40,10 @@ const Tally = ({
   source, campaign, autologin, rewardfulID,
   tally, forceCollapse, showLabels, notices,
   small = false, horizontal = false, isBadge = false, showZero = true,
-  showLogo = true, showTotal = true, showCites = true, useTestEnv = false
+  showLogo = true, showTotal = true, showCites = true, useTestEnv = false,
+  verticalCompact = false,
+  showRetractions = true,
+  showNotices = true
 }) => {
   const params = {
     utm_medium: isBadge ? 'badge' : 'plugin',
@@ -60,15 +63,21 @@ const Tally = ({
 
   const queryString = qs.stringify(params)
 
+  const mainContainerClasses = classNames(styles.mainContainer, {
+    [styles.showMainContainer]: showZero ? tally : isNonZero({ tally, notices, showCites }),
+    [styles.forceCollapse]: forceCollapse && tally.total === 0 && tally.citingPublications === 0
+  })
+
   const classes = {
     tally: classNames('scite-tally', styles.tally, {
       [styles.horizontal]: horizontal,
       [styles.small]: small && horizontal,
       [styles.show]: showZero ? tally : isNonZero({ tally, notices, showCites }),
-      [styles.forceCollapse]: forceCollapse && tally.total === 0 && tally.citingPublications === 0,
-      [styles.badgeTally]: isBadge
+      [styles.badgeTally]: isBadge,
+      [styles.verticalTally]: verticalCompact
     })
   }
+
   const citingPublications = (tally && tally.citingPublications && tally.citingPublications.toLocaleString()) || 0
   const supporting = (tally && tally.supporting && tally.supporting.toLocaleString()) || 0
   const contrasting = (tally && tally.contradicting && tally.contradicting.toLocaleString()) || 0
@@ -83,12 +92,30 @@ const Tally = ({
     window.open(`${sciteBaseUrl}/reports/${tally && tally.doi}?${queryString}`)
   }
 
-  return (
-    <div
-      className={classes.tally}
-      onClick={handleClick}
-    >
-      {(!horizontal && showLogo) && (
+  const Counters = () => (
+    <>
+      {showCites && showTotal && <Count type='publications' count={citingPublications} horizontal={horizontal} showLabels={showLabels} small={small} verticalCompact={verticalCompact} />}
+
+      {verticalCompact && <div className={styles.separator} />}
+      {showCites && <Count type='supporting' count={supporting} horizontal={horizontal} showLabels={showLabels} small={small} verticalCompact={verticalCompact} />}
+
+      {verticalCompact && <div className={styles.separator} />}
+      {showCites && <Count type='mentioning' count={mentioning} horizontal={horizontal} showLabels={showLabels} small={small} verticalCompact={verticalCompact} />}
+
+      {verticalCompact && <div className={styles.separator} />}
+      {showCites && <Count type='contrasting' count={contrasting} horizontal={horizontal} showLabels={showLabels} small={small} verticalCompact={verticalCompact} />}
+
+      {(verticalCompact && retractionsCount > 0 && showRetractions) && <div className={styles.separator} />}
+      {(retractionsCount > 0 && showRetractions) && <Count type='retractions' count={retractionsCount} horizontal={horizontal} showLabels={showLabels} small={small} verticalCompact={verticalCompact} />}
+
+      {(verticalCompact && noticeCount > 0 && showNotices) && <div className={styles.separator} />}
+      {(noticeCount > 0 && showNotices) && <Count type='notices' count={noticeCount} horizontal={horizontal} showLabels={showLabels} small={small} verticalCompact={verticalCompact} />}
+    </>
+  )
+
+  const TallyContent = () => (
+    <>
+      {(!horizontal && showLogo && !verticalCompact) && (
         <img
           className={classNames(styles.logo, {
             [styles.logoSmall]: small
@@ -96,12 +123,25 @@ const Tally = ({
           src='https://cdn.scite.ai/assets/images/logo.svg'
         />
       )}
-      {showCites && showTotal && <Count type='publications' count={citingPublications} horizontal={horizontal} showLabels={showLabels} small={small} />}
-      {showCites && <Count type='supporting' count={supporting} horizontal={horizontal} showLabels={showLabels} small={small} />}
-      {showCites && <Count type='mentioning' count={mentioning} horizontal={horizontal} showLabels={showLabels} small={small} />}
-      {showCites && <Count type='contrasting' count={contrasting} horizontal={horizontal} showLabels={showLabels} small={small} />}
-      {retractionsCount > 0 && <Count type='retractions' count={retractionsCount} horizontal={horizontal} showLabels={showLabels} small={small} />}
-      {noticeCount > 0 && <Count type='notices' count={noticeCount} horizontal={horizontal} showLabels={showLabels} small={small} />}
+
+      <Counters />
+    </>
+  )
+
+  return (
+    <div
+      id='scite-tally-container'
+      className={mainContainerClasses}
+      onClick={handleClick}
+    >
+      <div id='scite-inner-tally-container-styling-component' />
+
+      <div
+        id='scite-inner-tally-container'
+        className={classes.tally}
+      >
+        <TallyContent />
+      </div>
     </div>
   )
 }
