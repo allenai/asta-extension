@@ -1,6 +1,6 @@
-# Nora Extension
+# Asta Extension
 
-The Nora extension is a fork of the [Scite extension](https://github.com/scitedotai/scite-extension).
+The Asta extension is a fork of the [Scite extension](https://github.com/scitedotai/scite-extension).
 
 ## Publishing
 

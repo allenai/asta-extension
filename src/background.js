@@ -26,13 +26,13 @@ function onCreated () {
 }
 
 browser.contextMenus.create({
-  id: 'nora',
-  title: 'Ask Nora',
+  id: 'asta',
+  title: 'Ask Asta',
   contexts: ['selection']
 }, onCreated)
 
 browser.contextMenus.onClicked.addListener(function (info, tab) {
-  if (info.menuItemId === 'nora') {
+  if (info.menuItemId === 'asta') {
     if (info.selectionText) {
       const encodedSelection = encodeURIComponent(
         `${info.selectionText}`

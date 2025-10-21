@@ -1,7 +1,7 @@
 {
-  "name": "nora-extension",
+  "name": "asta-extension",
   "version": "0.0.8",
-  "description": "Nora the assistant can detect and provide help with papers.",
+  "description": "Asta the assistant can detect and provide help with papers.",
   "main": "index.js",
   "scripts": {
     "lint": "standard --verbose | snazzy && stylelint 'src/**/*.css'",

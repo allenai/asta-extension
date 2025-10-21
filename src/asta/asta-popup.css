@@ -1,0 +1,50 @@
+/* Asta popup styles - minimal CSS without upstream dependencies */
+
+/* Load scite-icons font for arrow icons */
+@font-face {
+  font-family: scite-icons;
+  src: url('moz-extension://__MSG_@@extension_id__/fonts/scite-icons/scite-icons.woff2') format('woff2'),
+       url('moz-extension://__MSG_@@extension_id__/fonts/scite-icons/scite-icons.woff') format('woff');
+  src: url('chrome-extension://__MSG_@@extension_id__/fonts/scite-icons/scite-icons.woff2') format('woff2'),
+       url('chrome-extension://__MSG_@@extension_id__/fonts/scite-icons/scite-icons.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.astaPopup {
+  z-index: 9999999999;
+  position: fixed;
+  right: 0;
+  top: 45%;
+  border-radius: 8px 0 0 8px;
+  border: 1px solid #cfcfcf;
+  border-right: none;
+  overflow: hidden;
+}
+
+@media print {
+  .astaPopup {
+    display: none;
+  }
+}
+
+/* Icon styles matching src/styles/Icon.css */
+.astaPopup i[class*="icon"] {
+  font-family: scite-icons !important;
+  speak: none;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1.5 !important;
+}
+
+.astaPopup i[class*="openingArrow"]::before {
+  content: "\e922";
+  color: #82807d;
+}
+
+.astaPopup i[class*="closingCaret"]::before {
+  content: "\e925"; /* left-caret matching scite original */
+  color: #82807d;
+}
