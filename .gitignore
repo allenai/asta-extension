@@ -9,3 +9,6 @@ npm-debug.log
 web-ext-artifacts
 scite
 .DS_Store
+.envrc
+.mise.toml
+*.zip

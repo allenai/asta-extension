@@ -1,20 +1,7 @@
 // TODO: (dom) look into deduplicating common extractors, loops, and styles.
 import queryString from 'query-string'
-import * as sciteBadge from './badge/main'
-import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './reference-matching'
+import { matchReference, insertAstaBadges } from './asta'
 import { sliceIntoChunks } from './util'
-
-function createBadge (corpusId) {
-  return `
-    <div>
-      <a href="https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
-        <button style="padding: 4px 8px; color: #f0529c; border: 1px solid #f0529c; background-color: #ffffff; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
-          Ask Nora about this paper
-        </button>
-      </a>
-    </div>
-  `
-}
 
 function removeElementsByQuery (query, parentEl = document) {
   const elements = parentEl.querySelectorAll(query)
@@ -1397,16 +1384,14 @@ export default async function insertBadges () {
   }
 
   const refsToResolve = []
-  const badgesWithDOIs = []
+  const badges = []
   for (const el of els) {
     if (el.doi) {
-      badgesWithDOIs.push(el)
+      badges.push(el)
     } else {
       refsToResolve.push(el)
     }
   }
-
-  const badges = []
 
   //
   // Resolve references up to 20 at a time
@@ -1414,59 +1399,21 @@ export default async function insertBadges () {
   const jobs = sliceIntoChunks(refsToResolve, 20)
   for (const batch of jobs) {
     await Promise.all(batch.map(async el => {
-      const result = await matchReferenceS2(el.reference)
-      if (result?.corpusId) {
+      const result = await matchReference(el.reference)
+      if (result?.matched && result?.doi) {
         badges.push({
           ...el,
-          corpusId: result.corpusId
+          doi: result.doi
         })
       }
     }))
   }
 
-  const jobs2 = sliceIntoChunks(badgesWithDOIs, 20)
-  for (const batch of jobs2) {
-    const result = await matchReferenceS2Batch({
-      paperIds: batch.map(badge => `DOI:${badge.doi}`),
-      fields: 'corpusId',
-    })
-    // check that result is an array and it is the smae length as batch
-    if (Array.isArray(result) && result.length === batch.length) {
-      for (let i = 0; i < result.length; i++) {
-        if (result[i] && result[i].corpusId) {
-          badges.push({
-            ...batch[i],
-            corpusId: result[i].corpusId
-          })
-        }
-      }
-    }
-  }
-
-  // Check showable badges 20 at a times
-  const jobs3 = sliceIntoChunks(badges, 20)
-  for (const batch of jobs3) {
-    await Promise.all(batch.map(async badge => {
-      const result = await checkShowable(badge.corpusId)
-      if (result) {
-        badge.showable = result.showable
-      }
-    })
-    )
-  }
-
-  removeElementsByQuery('.scite-extension-badge')
-  for (const badge of badges) {
-    if (badge.showable === false) {
-      continue
-    }
-    badge.citeEl.insertAdjacentHTML(badgeSite.position, createBadge(badge.corpusId))
-  }
+  // Scite badges removed - Asta extension uses only Asta badges (via S2 API)
+  // Reference resolution now uses S2 API instead of scite API
 
   const range = document.createRange()
   range.setStart(document.documentElement, 0)
-
-  sciteBadge.insertBadges()
 
   if (badgeSite.style) {
     document.documentElement.appendChild(
@@ -1477,5 +1424,12 @@ export default async function insertBadges () {
   if (badgeSite.initFunc && !initFuncSet) {
     initFuncSet = true
     badgeSite.initFunc()
+  }
+
+  // Insert Asta badges
+  // Note: Depends on badgeSite internal API (findDoiEls, position)
+  // If upstream refactors BADGE_SITES structure, this may need updates
+  if (badgeSite?.findDoiEls) {
+    await insertAstaBadges(badgeSite, badgeSite.findDoiEls)
   }
 }
