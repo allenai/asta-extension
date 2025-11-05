@@ -5,26 +5,23 @@
 import 'whatwg-fetch'
 import 'regenerator-runtime/runtime'
 
-import React from 'react'
-import { render } from 'react-dom'
-import HideableTally from './components/HideableTally'
-import Tally from './components/Tally'
-import TallyLoader from './components/TallyLoader'
-import styles from './styles.css'
 import insertBadges from './badges'
-import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './reference-matching'
+import { matchReference } from './asta'
 import { parsePDFForTitleandAuthor } from './pdf'
+import { insertAstaPopup } from './asta/asta-popup'
 
 /* global chrome, browser:true */
 if (typeof chrome !== 'undefined' && chrome) {
   window.browser = chrome // eslint-disable-line no-unused-vars
 }
 
+// eslint-disable-next-line no-unused-vars
 const getStorageItem = async (key) => {
   const storage = await new Promise(resolve => browser.storage.local.get(key, resolve))
   return storage[key]
 }
 
+// eslint-disable-next-line no-unused-vars
 const setStorageItem = (key) => {
   browser.storage.local.set(key)
 }
@@ -33,11 +30,6 @@ const IS_DEV = typeof process !== 'undefined' && process.NODE_ENV === 'developme
 const devLog = IS_DEV ? console.log.bind(window) : function () { }
 
 const DOI_REGEX = /(10.\d{4,9}\/[-._;()/:A-Z0-9]+)/ig
-const S2_ID_Prefixes = [
-  'arxiv',
-  'corpusid'
-]
-const hasS2Prefix = (doi) => S2_ID_Prefixes.some(v => doi && doi.toLowerCase().startsWith(`${v}:`))
 
 // Single-page apps take a while to fully load all the HTML,
 // and until they do we can't find the DOI
@@ -81,8 +73,6 @@ const docAsStr = document.documentElement.innerHTML
 const docTitle = document.title
 const myHost = window.location.hostname
 
-let poppedUp = false
-
 function runRegexOnDoc (re, host) {
   // @re regex that has a submatch in it that we're searching for, like /foo(.+?)bar/
   // @host optional. only work on this host.
@@ -98,7 +88,6 @@ function runRegexOnDoc (re, host) {
 // most scholarly articles have some kind of DOI meta
 // tag in the head of the document. Check these.
 function findDoiFromMetaTags () {
-  // TODO: Rename. Not just DOI.
   // collection of the various ways different publishers may
   // indicate a given meta tag has the DOI.
   const doiMetaNames = [
@@ -119,13 +108,6 @@ function findDoiFromMetaTags () {
 
     if (!name) {
       return true // keep iterating
-    }
-
-    // Special case for arxiv
-    if (name === 'citation_arxiv_id') {
-      const arxivIdCandidate = myMeta.content.toLowerCase().replace('arxiv:', '').trim()
-      doi = 'ARXIV:'.concat(arxivIdCandidate);
-      return true // continue iterating
     }
 
     // has to be a meta name likely to contain a DOI
@@ -233,16 +215,9 @@ function findDoiFromPsycnet () {
 }
 
 function findDoiFromSemanticScholar () {
-  // TODO: not just doi
   // example: https://www.semanticscholar.org/paper/ProofWriter%3A-Generating-Implications%2C-Proofs%2C-and-Tafjord-Dalvi/87c45a908537ffe1d2ab71a5d609bd7b4efa4fe1
   if (myHost.indexOf('www.semanticscholar.org') < 0) {
     return null
-  }
-
-  const corpusIdLink = document.querySelector('[data-test-id="corpus-id"]');
-  const corpusIdCandidate = corpusIdLink?.textContent.replace(/\D/g, '');
-  if (corpusIdCandidate) {
-    return 'CorpusId:'.concat(corpusIdCandidate);
   }
 
   const doiLinkElem = document.querySelector('.doi__link')
@@ -299,8 +274,8 @@ async function findDoiFromPDF () {
       return titleAndAuthor.doi
     }
     if (titleAndAuthor.title) {
-      const { corpusId } = await matchReferenceS2(titleAndAuthor)
-      return `CorpusId:${corpusId}`
+      const { doi } = await matchReference(titleAndAuthor)
+      return doi
     }
   }
 }
@@ -314,7 +289,6 @@ function findDoiFromWOS () {
 }
 
 async function findDoi () {
-  // TODO: Rename. Not just DOI.
   // we try each of these functions, in order, to get a DOI from the page.
   const doiFinderFunctions = [
     findDoiFromADS,
@@ -336,42 +310,10 @@ async function findDoi () {
     const myDoi = doiFinderFunctions[i]()
     if (myDoi && `${myDoi}`.startsWith('10.')) {
       // if we find a good DOI, stop looking
-      return `DOI:${myDoi}`
-    } else if (hasS2Prefix(myDoi)) {
       return myDoi
     }
   }
-  const doi = await findDoiFromPDF()
-  if (doi) {
-    return doi
-  }
-}
-
-async function popupDoi (corpusId) {
-  const popup = document.createElement('div')
-  popup.id = 'scite-popup'
-  if (poppedUp) {
-    return false
-  }
-  popup.scrolling = 'no'
-  popup.className = styles.sciteApp
-
-  const shouldHide = await getStorageItem('hidePopup') || false
-
-  document.documentElement.appendChild(popup)
-  render(
-    <HideableTally>
-      <div style={{ maxWidth: '200px', padding:'8px'}}>
-        <a href={`https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2&utm_source=extension&utm_medium=paper`} target="_blank" style={{ textDecoration: 'none' }}>
-          <button style={{ padding: '4px 8px', color: '#f0529c', border: '1px solid #f0529c', backgroundColor: '#ffffff', borderRadius: '4px', cursor: 'pointer', fontFamily: 'manrope, arial, sans-serif' }}>
-            Ask Nora about this paper
-          </button>
-        </a>
-      </div>
-    </HideableTally>,
-    popup
-  )
-  poppedUp = true
+  return await findDoiFromPDF()
 }
 
 function markPage () {
@@ -407,27 +349,15 @@ async function main () {
   }
   const doi = await findDoi()
 
-  if (!doi) {
-    return
-  }
-
-  let result = null;
-  if (doi.toLowerCase().startsWith('corpusid:')) {
-    const id = doi.replace(/corpusid:/i, '')
-    result = [{ corpusId: id }]
-  } else {
-    result = await matchReferenceS2Batch(
-      { paperIds: [doi], fields: 'corpusId' }
-    )
-  }
-
-  if (result && result[0] && result[0].corpusId) {
-    const showableResult = await checkShowable(result[0].corpusId)
-    if (showableResult && showableResult.showable === false) {
-      return
-    }
-    await popupDoi(result[0].corpusId)
-  }
+  // ========== ASTA: Use Asta popup instead of scite popup ==========
+  // Note: This intentionally replaces scite's citation statistics popup
+  // with an Asta chat button link. Users get "Ask Asta" button instead of scite tallies.
+  // If both popups should show, this logic needs updating.
+  //
+  // Call insertAstaPopup even when doi is null - it can enhance null by checking
+  // for ArXiv IDs or Corpus IDs on the current page (e.g. arxiv.org, semanticscholar.org)
+  await insertAstaPopup(doi)
+  // ========== END ASTA ==========
 }
 
 let timeoutID = null
@@ -436,7 +366,6 @@ function runWithDelay () {
   if (popupRef) {
     popupRef.remove()
   }
-  poppedUp = false
 
   let delay = 200
 
