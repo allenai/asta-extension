@@ -106,5 +106,19 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
       continue
     }
     badge.citeEl.insertAdjacentHTML(badgeSite.position, createAstaBadge(badge.corpusId))
+
+    // Google Scholar author pages intercept clicks on citation elements
+    // Add click handler to prevent propagation (only on author pages)
+    if (badgeSite.name === 'scholar.google' && window.location.pathname.includes('/citations')) {
+      const badgeLink = badge.citeEl.querySelector('.asta-extension-badge a')
+      if (badgeLink) {
+        badgeLink.addEventListener('click', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          event.stopImmediatePropagation()
+          window.open(badgeLink.href, '_blank')
+        })
+      }
+    }
   }
 }
