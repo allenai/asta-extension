@@ -1,11 +1,18 @@
 /* eslint-env jest */
+/* global browser */
+/* eslint-disable n/no-callback-literal */
 
 // Tests for Semantic Scholar API integration (s2-integration.js)
 // Covers: S2 API calls, identifier handling, showability checks
 
 import { matchReferenceS2, matchReferenceS2Batch, checkShowable, hasS2Prefix, extractArxivId, extractCorpusId } from '../s2-integration'
 
-const { fetch } = window
+// Mock browser.runtime for message passing
+global.browser = {
+  runtime: {
+    sendMessage: jest.fn()
+  }
+}
 
 // ============================================================================
 // Mock Data
@@ -40,7 +47,7 @@ const showableFalseMock = {
 }
 
 beforeEach(() => {
-  fetch.resetMocks()
+  browser.runtime.sendMessage.mockClear()
 })
 
 // ============================================================================
@@ -49,58 +56,60 @@ beforeEach(() => {
 
 describe('matchReferenceS2', () => {
   it('returns corpusId on successful title match', async () => {
-    fetch.mockResponseOnce(JSON.stringify(s2SearchMatchMock), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: true, data: s2SearchMatchMock })
     })
 
     const result = await matchReferenceS2({ title: 'Understanding Neural Networks' })
 
     expect(result).toEqual({ corpusId: 123456, paperId: 'abc123' })
-    expect(fetch).toHaveBeenCalledTimes(1)
-    const callArg = fetch.mock.calls[0][0]
-    const urlString = callArg.toString ? callArg.toString() : callArg
-    expect(urlString).toContain('api.semanticscholar.org/graph/v1/paper/search/match')
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
+    const call = browser.runtime.sendMessage.mock.calls[0][0]
+    expect(call.type).toBe('FETCH')
+    expect(call.url).toContain('api.semanticscholar.org/graph/v1/paper/search/match')
   })
 
   it('returns null when no results', async () => {
-    fetch.mockResponseOnce(JSON.stringify({ data: [] }))
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: true, data: { data: [] } })
+    })
 
     const result = await matchReferenceS2({ title: 'Nonexistent Paper Title' })
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
   })
 
   it('returns null on API error', async () => {
-    fetch.mockResponseOnce('', { status: 500 })
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: false, error: 'API error' })
+    })
 
     const result = await matchReferenceS2({ title: 'Some Paper' })
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
   })
 
   it('returns null with empty title', async () => {
     const result = await matchReferenceS2({ title: '' })
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(0)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
   })
 
   it('returns null with no title', async () => {
     const result = await matchReferenceS2({})
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(0)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
   })
 })
 
 describe('matchReferenceS2Batch', () => {
   it('returns array of papers with corpusIds', async () => {
-    fetch.mockResponseOnce(JSON.stringify(s2BatchMock), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: true, data: s2BatchMock })
     })
 
     const result = await matchReferenceS2Batch({
@@ -109,11 +118,11 @@ describe('matchReferenceS2Batch', () => {
     })
 
     expect(result).toEqual(s2BatchMock)
-    expect(fetch).toHaveBeenCalledTimes(1)
-    const callArg = fetch.mock.calls[0][0]
-    const urlString = callArg.toString ? callArg.toString() : callArg
-    expect(urlString).toContain('api.semanticscholar.org/graph/v1/paper/batch')
-    expect(fetch.mock.calls[0][1]).toMatchObject({
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
+    const call = browser.runtime.sendMessage.mock.calls[0][0]
+    expect(call.type).toBe('FETCH')
+    expect(call.url).toContain('api.semanticscholar.org/graph/v1/paper/batch')
+    expect(call.options).toMatchObject({
       method: 'POST',
       headers: expect.objectContaining({
         'Content-Type': 'application/json'
@@ -126,18 +135,20 @@ describe('matchReferenceS2Batch', () => {
     const result = await matchReferenceS2Batch({ paperIds: [], fields: 'corpusId' })
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(0)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
   })
 
   it('returns null with no paperIds', async () => {
     const result = await matchReferenceS2Batch({ fields: 'corpusId' })
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(0)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
   })
 
   it('handles API failures gracefully', async () => {
-    fetch.mockResponseOnce('', { status: 500 })
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: false, error: 'API error' })
+    })
 
     const result = await matchReferenceS2Batch({
       paperIds: ['DOI:10.1234/test'],
@@ -145,59 +156,157 @@ describe('matchReferenceS2Batch', () => {
     })
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
   })
 })
 
 describe('checkShowable', () => {
   it('returns showable true for valid corpusId', async () => {
-    fetch.mockResponseOnce(JSON.stringify(showableTrueMock), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: true, data: showableTrueMock })
     })
 
     const result = await checkShowable(123456)
 
     expect(result).toEqual({ showable: true })
-    expect(fetch).toHaveBeenCalledTimes(1)
-    const callArg = fetch.mock.calls[0][0]
-    const urlString = callArg.toString ? callArg.toString() : callArg
-    expect(urlString).toContain('mage.allen.ai/isShowable/123456')
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
+    const call = browser.runtime.sendMessage.mock.calls[0][0]
+    expect(call.type).toBe('FETCH')
+    expect(call.url).toContain('mage.allen.ai/isShowable/123456')
   })
 
   it('returns showable false for restricted papers', async () => {
-    fetch.mockResponseOnce(JSON.stringify(showableFalseMock), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: true, data: showableFalseMock })
     })
 
     const result = await checkShowable(789012)
 
     expect(result).toEqual({ showable: false })
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
   })
 
   it('returns null on API error', async () => {
-    fetch.mockResponseOnce('', { status: 500 })
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: false, error: 'API error' })
+    })
 
     const result = await checkShowable(123456)
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
   })
 
   it('returns null with no corpusId', async () => {
     const result = await checkShowable(null)
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(0)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
   })
 
   it('returns null with undefined corpusId', async () => {
     const result = await checkShowable(undefined)
 
     expect(result).toBeNull()
-    expect(fetch).toHaveBeenCalledTimes(0)
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
+  })
+})
+
+// ============================================================================
+// Retry Logic Tests (Critical for CORS fix)
+// ============================================================================
+
+describe('bgFetch retry logic', () => {
+  it('does NOT retry on 404 errors (permanent)', async () => {
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: false, status: 404, error: 'Not Found' })
+    })
+
+    const result = await matchReferenceS2({ title: 'Nonexistent Paper' })
+
+    expect(result).toBeNull()
+    // Should only try once - 404 is permanent, no retry
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('DOES retry on 429 errors (rate limit)', async () => {
+    let callCount = 0
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callCount++
+      if (callCount === 1) {
+        // First call gets rate limited
+        callback({ ok: false, status: 429, error: 'Rate Limited' })
+      } else {
+        // Retry succeeds
+        callback({ ok: true, data: s2SearchMatchMock })
+      }
+    })
+
+    const result = await matchReferenceS2({ title: 'Some Paper' })
+
+    expect(result).toEqual({ corpusId: 123456, paperId: 'abc123' })
+    // Should try twice - 429 is transient, retry once
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
+  })
+
+  it('DOES retry on 500 errors (server error)', async () => {
+    let callCount = 0
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callCount++
+      if (callCount === 1) {
+        callback({ ok: false, status: 500, error: 'Internal Server Error' })
+      } else {
+        callback({ ok: true, data: s2SearchMatchMock })
+      }
+    })
+
+    const result = await matchReferenceS2({ title: 'Some Paper' })
+
+    expect(result).toEqual({ corpusId: 123456, paperId: 'abc123' })
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
+  })
+
+  it('DOES retry on network errors (status 0)', async () => {
+    let callCount = 0
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callCount++
+      if (callCount === 1) {
+        callback({ ok: false, status: 0, error: 'Network error' })
+      } else {
+        callback({ ok: true, data: s2SearchMatchMock })
+      }
+    })
+
+    const result = await matchReferenceS2({ title: 'Some Paper' })
+
+    expect(result).toEqual({ corpusId: 123456, paperId: 'abc123' })
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
+  })
+
+  it('does NOT retry on 400 errors (bad request)', async () => {
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      callback({ ok: false, status: 400, error: 'Bad Request' })
+    })
+
+    const result = await matchReferenceS2({ title: 'Some Paper' })
+
+    expect(result).toBeNull()
+    // 400 is permanent client error, no retry
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives up after max retries on persistent 429', async () => {
+    browser.runtime.sendMessage.mockImplementation((request, callback) => {
+      // Always return 429
+      callback({ ok: false, status: 429, error: 'Rate Limited' })
+    })
+
+    // Should return null after retries exhausted (just logs and gives up)
+    const result = await matchReferenceS2({ title: 'Some Paper' })
+
+    expect(result).toBeNull()
+    // Should try initial + 1 retry = 2 total
+    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
   })
 })
 

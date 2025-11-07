@@ -26,6 +26,12 @@ function removeElementsByQuery (query, parentEl = document) {
   }
 }
 
+// Helper to add delay between batches to avoid rate limiting
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+// Guard to prevent concurrent executions
+let isRunning = false
+
 // This function will be called by the main extension to insert Asta badges
 // It reuses the same BADGE_SITES structure from badges.js
 export async function insertAstaBadges (badgeSite, findDoiEls) {
@@ -33,17 +39,34 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
     return
   }
 
+  // Prevent concurrent executions
+  if (isRunning) {
+    return
+  }
+
+  isRunning = true
+
   // Remove old Asta badges
   removeElementsByQuery('.asta-extension-badge')
 
   const els = findDoiEls()
   if (!els || els.length <= 0) {
+    isRunning = false
     return
   }
 
+  // Deduplicate by reference title or DOI to avoid processing same paper twice
+  const seen = new Set()
   const refsToResolve = []
   const badgesWithDOIs = []
   for (const el of els) {
+    const key = el.doi || el.reference?.title || ''
+
+    if (key && seen.has(key)) {
+      continue
+    }
+    if (key) seen.add(key)
+
     if (el.doi) {
       badgesWithDOIs.push(el)
     } else {
@@ -52,53 +75,89 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
   }
 
   const badges = []
-
-  //
-  // Resolve references up to 20 at a time
-  //
-  const jobs = sliceIntoChunks(refsToResolve, 20)
-  for (const batch of jobs) {
-    await Promise.all(batch.map(async el => {
-      const result = await matchReferenceS2(el.reference)
-      if (result?.corpusId) {
-        badges.push({
-          ...el,
-          corpusId: result.corpusId
-        })
-      }
-    }))
+  const errors = {
+    refMatchFailed: 0,
+    refShowableFailed: 0,
+    doiShowableFailed: 0,
+    refNoCorpusId: 0
   }
 
-  const jobs2 = sliceIntoChunks(badgesWithDOIs, 20)
-  for (const batch of jobs2) {
-    const result = await matchReferenceS2Batch({
-      paperIds: batch.map(badge => `DOI:${badge.doi}`),
-      fields: 'corpusId'
-    })
-    // check that result is an array and it is the same length as batch
-    if (Array.isArray(result) && result.length === batch.length) {
-      for (let i = 0; i < result.length; i++) {
-        if (result[i] && result[i].corpusId) {
-          badges.push({
-            ...batch[i],
-            corpusId: result[i].corpusId
-          })
+  // Process references and DOIs in parallel (independent operations)
+  // Each checks showable inline to avoid blocking on corpusId collection
+  //
+  // Concurrency set to 10 for fast performance
+  await Promise.all([
+    // Process papers without DOIs via /search/match
+    (async () => {
+      const jobs = sliceIntoChunks(refsToResolve, 10)
+      for (let i = 0; i < jobs.length; i++) {
+        const batch = jobs[i]
+        await Promise.all(batch.map(async el => {
+          const result = await matchReferenceS2(el.reference)
+
+          if (result?.corpusId) {
+            try {
+              const showable = await checkShowable(result.corpusId)
+              badges.push({
+                ...el,
+                corpusId: result.corpusId,
+                showable: showable?.showable
+              })
+            } catch (e) {
+              errors.refShowableFailed++
+              console.error(`[Asta] Showable check failed for ref ${result.corpusId}: ${e.message}`)
+            }
+          } else {
+            errors.refNoCorpusId++
+          }
+        }))
+        // Small delay to prevent rate limiting
+        if (i < jobs.length - 1) {
+          await delay(200)
         }
       }
-    }
-  }
+    })(),
 
-  // Check showable badges 20 at a times
-  const jobs3 = sliceIntoChunks(badges, 20)
-  for (const batch of jobs3) {
-    await Promise.all(batch.map(async badge => {
-      const result = await checkShowable(badge.corpusId)
-      if (result) {
-        badge.showable = result.showable
+    // Process papers with DOIs via /paper/batch
+    (async () => {
+      const jobs2 = sliceIntoChunks(badgesWithDOIs, 20)
+      for (let i = 0; i < jobs2.length; i++) {
+        const batch = jobs2[i]
+        const result = await matchReferenceS2Batch({
+          paperIds: batch.map(badge => `DOI:${badge.doi}`),
+          fields: 'corpusId'
+        })
+        // check that result is an array and it is the same length as batch
+        if (Array.isArray(result) && result.length === batch.length) {
+          // Create temp array with corpusIds
+          const tempBatch = batch.map((badge, j) => ({
+            ...badge,
+            corpusId: result[j]?.corpusId
+          })).filter(b => b.corpusId)
+
+          // Check showable in controlled batches of 10 to avoid overwhelming MAGE
+          const showableJobs = sliceIntoChunks(tempBatch, 10)
+          for (let k = 0; k < showableJobs.length; k++) {
+            const showableBatch = showableJobs[k]
+            await Promise.all(showableBatch.map(async (badge) => {
+              try {
+                const showable = await checkShowable(badge.corpusId)
+                badges.push({
+                  ...badge,
+                  showable: showable?.showable
+                })
+              } catch (e) {
+                errors.doiShowableFailed++
+                console.error(`[Asta] Showable check failed for DOI ${badge.corpusId}: ${e.message}`)
+              }
+            }))
+            if (k < showableJobs.length - 1) await delay(100)
+          }
+        }
+        // No delay needed - retry logic already handles rate limiting
       }
-    })
-    )
-  }
+    })()
+  ])
 
   removeElementsByQuery('.asta-extension-badge')
   for (const badge of badges) {
@@ -121,4 +180,7 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
       }
     }
   }
+
+  // Release the lock
+  isRunning = false
 }
