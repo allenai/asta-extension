@@ -3,17 +3,20 @@ if (typeof chrome !== 'undefined' && chrome) {
   browser = chrome
 }
 
+// Base URL injected at build time based on TARGET environment variable
+const ASTA_UI_URL = process.env.ASTA_UI_URL
+
 browser.runtime.onInstalled.addListener(function (details) {
   if (details.reason === 'install') {
     browser.tabs.create({
-      url: 'https://nora.allen.ai/chat?utm_source=extension&utm_medium=install'
+      url: `${ASTA_UI_URL}/?utm_source=extension&utm_medium=install`
     })
   }
 })
 
 browser.action.onClicked.addListener(function (tab) {
   browser.tabs.create({
-    url: 'https://nora.allen.ai/chat?utm_source=extension&utm_medium=button_click'
+    url: `${ASTA_UI_URL}/?utm_source=extension&utm_medium=button_click`
   })
 })
 
@@ -39,7 +42,7 @@ browser.contextMenus.onClicked.addListener(function (info, tab) {
       )
 
       browser.tabs.create({
-        url: `https://nora.allen.ai/chat?query=${encodedSelection}&utm_source=extension&utm_medium=context`
+        url: `${ASTA_UI_URL}/?query=${encodedSelection}&utm_source=extension&utm_medium=context`
       })
     }
   }
