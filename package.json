@@ -1,6 +1,6 @@
 {
   "name": "asta-extension",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Asta the assistant can detect and provide help with papers.",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "build": "NODE_ENV=production webpack --config config/webpack.prod.js",
+    "build:internal": "TARGET=internal npm run build",
     "dev:badge": "webpack serve -c config/badge/webpack.dev.js",
     "build:badge": "NODE_ENV=production webpack -c config/badge/webpack.prod.js",
     "upload_badge": "node ./scripts/upload-badge.js"

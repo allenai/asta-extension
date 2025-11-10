@@ -7,7 +7,7 @@ describe('createBadge', () => {
   function createBadge (corpusId) {
     return `
     <div>
-      <a href="https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20${corpusId}%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
+      <a href="https://docvis-ui.allen.ai/?corpus_id=${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
         <button style="padding: 4px 8px; color: #f0529c; border: 1px solid #f0529c; background-color: #ffffff; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
           Ask Asta about this paper
         </button>
@@ -16,16 +16,16 @@ describe('createBadge', () => {
   `
   }
 
-  it('generates HTML with corpusId in URL', () => {
+  it('generates HTML with corpus_id in URL', () => {
     const html = createBadge(123456)
 
-    expect(html).toContain('corpusId%22%3A%20123456')
+    expect(html).toContain('corpus_id=123456')
   })
 
   it('includes correct chat URL', () => {
     const html = createBadge(123456)
 
-    expect(html).toContain('https://nora.allen.ai/chat')
+    expect(html).toContain('https://docvis-ui.allen.ai/')
   })
 
   it('includes UTM parameters for tracking', () => {
@@ -58,8 +58,8 @@ describe('createBadge', () => {
     const html1 = createBadge(111111)
     const html2 = createBadge(999999)
 
-    expect(html1).toContain('corpusId%22%3A%20111111')
-    expect(html2).toContain('corpusId%22%3A%20999999')
+    expect(html1).toContain('corpus_id=111111')
+    expect(html2).toContain('corpus_id=999999')
   })
 })
 

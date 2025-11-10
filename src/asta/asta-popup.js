@@ -8,10 +8,10 @@ import HideableTally from '../components/HideableTally'
 import styles from './asta-popup.css' // Asta-specific styles (includes CSS-only arrow icons)
 import { matchReferenceS2Batch, checkShowable, extractArxivId, extractCorpusId } from './s2-integration'
 
-const ASTA_CHAT_BASE_URL = 'https://nora.allen.ai/chat?trigger=reader&trigger_context=%7B%22corpusId%22%3A%20'
-const ASTA_CHAT_PARAMS = '%7D&message_id=7af3e2de-2098-4bc4-987e-fcf0985355a2&utm_source=extension&utm_medium=paper'
+// Base URL injected at build time based on TARGET environment variable
+const ASTA_UI_URL = process.env.ASTA_UI_URL
 
-const buildAstaChatUrl = (corpusId) => `${ASTA_CHAT_BASE_URL}${corpusId}${ASTA_CHAT_PARAMS}`
+const buildAstaChatUrl = (corpusId) => `${ASTA_UI_URL}/?corpus_id=${corpusId}&utm_source=extension&utm_medium=paper`
 
 let poppedUp = false
 
