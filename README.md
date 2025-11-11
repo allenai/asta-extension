@@ -4,8 +4,9 @@ The Asta extension is a fork of the [Scite extension](https://github.com/scitedo
 
 ## Publishing
 
-The Chrome listing is [here](https://chrome.google.com/webstore/devconsole/REDACTED_PUBLISHER_ID/chnledlomgnijcieoebgimaijdldckgb/edit).
-Login info credentials are in the [1password vault](https://REDACTED_1PASS_LINK).
+Chrome store listings for developers: [Internal](https://chrome.google.com/webstore/devconsole/REDACTED_PUBLISHER_ID/chnledlomgnijcieoebgimaijdldckgb/edit/) and [Public](https://chrome.google.com/webstore/devconsole/REDACTED_PUBLISHER_ID/baigocfaeehaielhlieikbgahomikbdj/edit)
+  - Login info credentials are in the [1password vault](https://REDACTED_1PASS_LINK).
+  - Chrome store listings for users: [Internal](https://chromewebstore.google.com/detail/chnledlomgnijcieoebgimaijdldckgb) and [Public](https://chromewebstore.google.com/detail/baigocfaeehaielhlieikbgahomikbdj)
 
 We have not yet published to the Firefox store.
 Login credentials are also in the [1password vault](https://REDACTED_1PASS_LINK).
