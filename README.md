@@ -4,8 +4,9 @@ The Asta extension is a fork of the [Scite extension](https://github.com/scitedo
 
 ## Publishing
 
-The Chrome listing is [here](https://chrome.google.com/webstore/devconsole/0153b764-4524-4246-83a1-aecef3900916/chnledlomgnijcieoebgimaijdldckgb/edit).
-Login info credentials are in the [1password vault](https://start.1password.com/open/i?a=DES74C5MCVDCTGGUDF3CJBUJC4&v=4736qu2dqfkjjxqs63w4c2gwt4&i=jciihelqmbebldrrxwaiscaan4&h=allenai.1password.com).
+Chrome store listings for developers: [Internal](https://chrome.google.com/webstore/devconsole/0153b764-4524-4246-83a1-aecef3900916/chnledlomgnijcieoebgimaijdldckgb/edit/) and [Public](https://chrome.google.com/webstore/devconsole/0153b764-4524-4246-83a1-aecef3900916/baigocfaeehaielhlieikbgahomikbdj/edit)
+  - Login info credentials are in the [1password vault](https://start.1password.com/open/i?a=DES74C5MCVDCTGGUDF3CJBUJC4&v=4736qu2dqfkjjxqs63w4c2gwt4&i=jciihelqmbebldrrxwaiscaan4&h=allenai.1password.com).
+  - Chrome store listings for users: [Internal](https://chromewebstore.google.com/detail/chnledlomgnijcieoebgimaijdldckgb) and [Public](https://chromewebstore.google.com/detail/baigocfaeehaielhlieikbgahomikbdj)
 
 We have not yet published to the Firefox store.
 Login credentials are also in the [1password vault](https://start.1password.com/open/i?a=DES74C5MCVDCTGGUDF3CJBUJC4&v=4736qu2dqfkjjxqs63w4c2gwt4&i=r6oobvmx2rfmnlekxuzansoqiu&h=allenai.1password.com).
