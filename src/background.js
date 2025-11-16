@@ -20,15 +20,14 @@ browser.action.onClicked.addListener(function (tab) {
   })
 })
 
-function onCreated () {
-  if (browser.runtime.lastError) {
-    console.log(`Error: ${browser.runtime.lastError}`)
-  } else {
-    console.log('Item created successfully')
-  }
-}
-
 // Context menu disabled until deep linking available in Asta product
+// function onCreated () {
+//   if (browser.runtime.lastError) {
+//     console.log(`Error: ${browser.runtime.lastError}`)
+//   } else {
+//     console.log('Item created successfully')
+//   }
+// }
 // browser.contextMenus.create({
 //   id: 'asta',
 //   title: 'Ask Asta',
