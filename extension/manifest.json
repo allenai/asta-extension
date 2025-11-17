@@ -1,7 +1,7 @@
 {
   "name": "Asta",
   "author": "Allen Institute for AI",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "manifest_version": 3,
   "description": "Detects papers as you browse and adds buttons that let you ask questions about them using AI.",
   "icons": {
