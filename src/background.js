@@ -20,33 +20,33 @@ browser.action.onClicked.addListener(function (tab) {
   })
 })
 
-function onCreated () {
-  if (browser.runtime.lastError) {
-    console.log(`Error: ${browser.runtime.lastError}`)
-  } else {
-    console.log('Item created successfully')
-  }
-}
+// Context menu disabled until deep linking available in Asta product
+// function onCreated () {
+//   if (browser.runtime.lastError) {
+//     console.log(`Error: ${browser.runtime.lastError}`)
+//   } else {
+//     console.log('Item created successfully')
+//   }
+// }
+// browser.contextMenus.create({
+//   id: 'asta',
+//   title: 'Ask Asta',
+//   contexts: ['selection']
+// }, onCreated)
 
-browser.contextMenus.create({
-  id: 'asta',
-  title: 'Ask Asta',
-  contexts: ['selection']
-}, onCreated)
+// browser.contextMenus.onClicked.addListener(function (info, tab) {
+//   if (info.menuItemId === 'asta') {
+//     if (info.selectionText) {
+//       const encodedSelection = encodeURIComponent(
+//         `${info.selectionText}`
+//       )
 
-browser.contextMenus.onClicked.addListener(function (info, tab) {
-  if (info.menuItemId === 'asta') {
-    if (info.selectionText) {
-      const encodedSelection = encodeURIComponent(
-        `${info.selectionText}`
-      )
-
-      browser.tabs.create({
-        url: `${ASTA_UI_URL}/?query=${encodedSelection}&utm_source=extension&utm_medium=context`
-      })
-    }
-  }
-})
+//       browser.tabs.create({
+//         url: `${ASTA_UI_URL}/?query=${encodedSelection}&utm_source=extension&utm_medium=context`
+//       })
+//     }
+//   }
+// })
 
 // Fetch proxy for content scripts (CORS workaround)
 // Content scripts can't use host_permissions, so they send requests here

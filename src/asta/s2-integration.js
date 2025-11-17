@@ -2,7 +2,7 @@
 
 /* global chrome, browser */
 
-const S2_API_URL = 'https://api.semanticscholar.org/graph/v1'
+const S2_API_URL = 'https://i13p7wsrzb.execute-api.us-west-2.amazonaws.com/prod/graph/v1'
 
 // Get browser API - works in Chrome and tests (Firefox untested)
 const getBrowserAPI = () => {

@@ -1,7 +1,7 @@
 {
   "name": "asta-extension",
   "version": "0.0.9",
-  "description": "Asta the assistant can detect and provide help with papers.",
+  "description": "Detects papers as you browse and adds buttons that let you ask questions about them using AI.",
   "main": "index.js",
   "scripts": {
     "lint": "standard --verbose | snazzy && stylelint 'src/**/*.css'",
