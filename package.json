@@ -1,6 +1,6 @@
 {
   "name": "asta-extension",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Detects papers as you browse and adds buttons that let you ask questions about them using AI.",
   "main": "index.js",
   "scripts": {
