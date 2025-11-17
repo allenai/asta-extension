@@ -112,7 +112,7 @@ function renderAstaPopup (corpusId) {
             fontSize: '14px'
           }}
           >
-            Ask Asta about this paper
+            Ask AI about this paper
           </button>
         </a>
       </div>

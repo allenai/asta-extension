@@ -61,7 +61,7 @@ describe('matchReference (S2-based)', () => {
     // Verify correct API call
     const call = browser.runtime.sendMessage.mock.calls[0][0]
     expect(call.type).toBe('FETCH')
-    expect(call.url).toContain('api.semanticscholar.org/graph/v1/paper/search/match')
+    expect(call.url).toContain('REDACTED/prod/graph/v1/paper/search/match')
     expect(call.url).toContain('fields=externalIds%2CcorpusId')
   })
 
