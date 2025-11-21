@@ -7,7 +7,7 @@ describe('createBadge', () => {
   function createBadge (corpusId) {
     return `
     <div>
-      <a href="https://docvis-ui.allen.ai/?corpus_id=${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
+      <a href="https://paperfigureqa.allen.ai/?corpus_id=${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
         <button style="padding: 4px 8px; color: #f0529c; border: 1px solid #f0529c; background-color: #ffffff; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
           Ask AI about this paper
         </button>
@@ -25,7 +25,7 @@ describe('createBadge', () => {
   it('includes correct chat URL', () => {
     const html = createBadge(123456)
 
-    expect(html).toContain('https://docvis-ui.allen.ai/')
+    expect(html).toContain('https://paperfigureqa.allen.ai/')
   })
 
   it('includes UTM parameters for tracking', () => {
