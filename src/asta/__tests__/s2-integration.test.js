@@ -38,7 +38,6 @@ const s2BatchMock = [
   }
 ]
 
-
 beforeEach(() => {
   browser.runtime.sendMessage.mockClear()
 })
@@ -152,7 +151,6 @@ describe('matchReferenceS2Batch', () => {
     expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
   })
 })
-
 
 // ============================================================================
 // Retry Logic Tests (Critical for CORS fix)
