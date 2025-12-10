@@ -14,8 +14,7 @@ export {
   extractArxivId,
   extractCorpusId,
   matchReferenceS2,
-  matchReferenceS2Batch,
-  checkShowable
+  matchReferenceS2Batch
 } from './s2-integration'
 
 // Asta badge creation and insertion

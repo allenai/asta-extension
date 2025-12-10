@@ -1,5 +1,5 @@
 // Asta "Ask about this paper" badge integration
-import { matchReferenceS2, matchReferenceS2Batch, checkShowable } from './s2-integration'
+import { matchReferenceS2, matchReferenceS2Batch } from './s2-integration'
 import { sliceIntoChunks } from '../util'
 
 // Base URL injected at build time based on TARGET environment variable
@@ -75,17 +75,15 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
   }
 
   const badges = []
-  const errors = {
-    refMatchFailed: 0,
-    refShowableFailed: 0,
-    doiShowableFailed: 0,
-    refNoCorpusId: 0
+  const stats = {
+    refsNoCorpusId: 0,
+    refsNoFulltext: 0,
+    doisNoCorpusId: 0,
+    doisNoFulltext: 0
   }
 
   // Process references and DOIs in parallel (independent operations)
-  // Each checks showable inline to avoid blocking on corpusId collection
-  //
-  // Concurrency set to 10 for fast performance
+  // Only add badges for papers with full text available (textAvailability === 'fulltext')
   await Promise.all([
     // Process papers without DOIs via /search/match
     (async () => {
@@ -94,21 +92,12 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
         const batch = jobs[i]
         await Promise.all(batch.map(async el => {
           const result = await matchReferenceS2(el.reference)
-
-          if (result?.corpusId) {
-            try {
-              const showable = await checkShowable(result.corpusId)
-              badges.push({
-                ...el,
-                corpusId: result.corpusId,
-                showable: showable?.showable
-              })
-            } catch (e) {
-              errors.refShowableFailed++
-              console.error(`[Asta] Showable check failed for ref ${result.corpusId}: ${e.message}`)
-            }
+          if (!result?.corpusId) {
+            stats.refsNoCorpusId++
+          } else if (result.textAvailability !== 'fulltext') {
+            stats.refsNoFulltext++
           } else {
-            errors.refNoCorpusId++
+            badges.push({ ...el, corpusId: result.corpusId })
           }
         }))
         // Small delay to prevent rate limiting
@@ -124,46 +113,30 @@ export async function insertAstaBadges (badgeSite, findDoiEls) {
       for (let i = 0; i < jobs2.length; i++) {
         const batch = jobs2[i]
         const result = await matchReferenceS2Batch({
-          paperIds: batch.map(badge => `DOI:${badge.doi}`),
-          fields: 'corpusId'
+          paperIds: batch.map(badge => `DOI:${badge.doi}`)
         })
-        // check that result is an array and it is the same length as batch
         if (Array.isArray(result) && result.length === batch.length) {
-          // Create temp array with corpusIds
-          const tempBatch = batch.map((badge, j) => ({
-            ...badge,
-            corpusId: result[j]?.corpusId
-          })).filter(b => b.corpusId)
-
-          // Check showable in controlled batches of 10 to avoid overwhelming MAGE
-          const showableJobs = sliceIntoChunks(tempBatch, 10)
-          for (let k = 0; k < showableJobs.length; k++) {
-            const showableBatch = showableJobs[k]
-            await Promise.all(showableBatch.map(async (badge) => {
-              try {
-                const showable = await checkShowable(badge.corpusId)
-                badges.push({
-                  ...badge,
-                  showable: showable?.showable
-                })
-              } catch (e) {
-                errors.doiShowableFailed++
-                console.error(`[Asta] Showable check failed for DOI ${badge.corpusId}: ${e.message}`)
-              }
-            }))
-            if (k < showableJobs.length - 1) await delay(100)
-          }
+          batch.forEach((badge, j) => {
+            if (!result[j]?.corpusId) {
+              stats.doisNoCorpusId++
+            } else if (result[j].textAvailability !== 'fulltext') {
+              stats.doisNoFulltext++
+            } else {
+              badges.push({ ...badge, corpusId: result[j].corpusId })
+            }
+          })
         }
-        // No delay needed - retry logic already handles rate limiting
       }
     })()
   ])
 
+  // Log stats for debugging
+  if (stats.refsNoCorpusId || stats.refsNoFulltext || stats.doisNoCorpusId || stats.doisNoFulltext) {
+    console.debug('[Asta] Badge stats:', stats)
+  }
+
   removeElementsByQuery('.asta-extension-badge')
   for (const badge of badges) {
-    if (badge.showable === false) {
-      continue
-    }
     badge.citeEl.insertAdjacentHTML(badgeSite.position, createAstaBadge(badge.corpusId))
 
     // Google Scholar author pages intercept clicks on citation elements

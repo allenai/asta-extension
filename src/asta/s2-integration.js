@@ -122,7 +122,7 @@ export const extractCorpusId = () => {
 // https://api.semanticscholar.org/api-docs/graph#tag/Paper-Data/operation/get_graph_paper_title_search
 export const matchReferenceS2 = async ({
   title,
-  fields = 'corpusId'
+  fields = 'corpusId,textAvailability'
 } = {}) => {
   if (!title) {
     return null
@@ -164,7 +164,7 @@ export const matchReferenceS2 = async ({
 // https://api.semanticscholar.org/api-docs/graph#tag/Paper-Data/operation/post_graph_get_papers
 export const matchReferenceS2Batch = async ({
   paperIds,
-  fields = 'corpusId'
+  fields = 'corpusId,textAvailability'
 }) => {
   if (!paperIds || !paperIds.length) {
     return null
@@ -188,21 +188,3 @@ export const matchReferenceS2Batch = async ({
   }
 }
 
-export const checkShowable = async (corpusid) => {
-  if (!corpusid) {
-    return null
-  }
-
-  const url = new URL(`https://mage.allen.ai/isShowable/${corpusid}`)
-
-  try {
-    const result = await bgFetch(url.href)
-    const data = await result.json()
-    if (data) {
-      return data
-    }
-    return null
-  } catch (e) {
-    return null
-  }
-}
