@@ -63,127 +63,108 @@ describe('createBadge', () => {
   })
 })
 
-describe('Badge showability filtering', () => {
-  it('should skip badges where showable is false', () => {
-    const badges = [
-      { corpusId: 123, showable: false },
-      { corpusId: 456, showable: true },
-      { corpusId: 789, showable: false }
-    ]
+describe('insertAstaBadges', () => {
+  const { insertAstaBadges } = require('../asta-badges')
+  const s2Integration = require('../s2-integration')
 
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
+  jest.mock('../s2-integration')
 
-    expect(filteredBadges).toHaveLength(1)
-    expect(filteredBadges[0].corpusId).toBe(456)
+  beforeEach(() => {
+    jest.clearAllMocks()
+    document.body.innerHTML = '<div id="container"></div>'
+
+    s2Integration.matchReferenceS2.mockResolvedValue({ corpusId: 123, textAvailability: 'fulltext' })
+    s2Integration.matchReferenceS2Batch.mockResolvedValue([{ corpusId: 456, textAvailability: 'fulltext' }])
   })
 
-  it('should include badges where showable is true', () => {
-    const badges = [
-      { corpusId: 123, showable: true },
-      { corpusId: 456, showable: true }
+  it('only inserts badges for papers with fulltext availability', async () => {
+    s2Integration.matchReferenceS2
+      .mockResolvedValueOnce({ corpusId: 111, textAvailability: 'fulltext' })
+      .mockResolvedValueOnce({ corpusId: 222, textAvailability: 'abstract' })
+      .mockResolvedValueOnce({ corpusId: 333, textAvailability: 'none' })
+
+    const container = document.getElementById('container')
+    const mockFindDoiEls = () => [
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'Paper 1' } },
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'Paper 2' } },
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'Paper 3' } }
     ]
 
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
+    await insertAstaBadges({ name: 'test', position: 'beforeend' }, mockFindDoiEls)
 
-    expect(filteredBadges).toHaveLength(2)
+    const badges = document.querySelectorAll('.asta-extension-badge')
+    expect(badges).toHaveLength(1) // Only fulltext paper gets a badge
   })
 
-  it('should include badges where showable is undefined', () => {
-    const badges = [
-      { corpusId: 123 },
-      { corpusId: 456, showable: true }
+  it('skips duplicate titles - only calls API once per unique title', async () => {
+    const container = document.getElementById('container')
+    const mockFindDoiEls = () => [
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'Same Paper' } },
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'Same Paper' } }
     ]
 
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
+    await insertAstaBadges({ name: 'test', position: 'beforeend' }, mockFindDoiEls)
 
-    expect(filteredBadges).toHaveLength(2)
+    expect(s2Integration.matchReferenceS2).toHaveBeenCalledTimes(1)
   })
 
-  it('should handle empty badge array', () => {
-    const badges = []
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
-
-    expect(filteredBadges).toHaveLength(0)
-  })
-
-  it('should handle all badges being non-showable', () => {
-    const badges = [
-      { corpusId: 123, showable: false },
-      { corpusId: 456, showable: false }
+  it('skips duplicate DOIs - only calls batch API once per unique DOI', async () => {
+    const container = document.getElementById('container')
+    const mockFindDoiEls = () => [
+      { citeEl: container.appendChild(document.createElement('div')), doi: '10.1234/same' },
+      { citeEl: container.appendChild(document.createElement('div')), doi: '10.1234/same' }
     ]
 
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
+    await insertAstaBadges({ name: 'test', position: 'beforeend' }, mockFindDoiEls)
 
-    expect(filteredBadges).toHaveLength(0)
-  })
-})
-
-describe('Deduplication logic', () => {
-  it('skips exact duplicate papers', () => {
-    const papers = [
-      { title: 'Attention Is All You Need' },
-      { title: 'Attention Is All You Need' }, // Exact duplicate
-      { title: 'BERT: Pre-training of Deep Bidirectional Transformers' }
-    ]
-
-    const seen = new Set()
-    const unique = []
-
-    for (const paper of papers) {
-      const key = paper.title || ''
-      if (key && !seen.has(key)) {
-        seen.add(key)
-        unique.push(paper)
-      }
-    }
-
-    // Should deduplicate exact match
-    expect(unique).toHaveLength(2)
-    expect(seen.size).toBe(2)
+    // Batch is called once with 1 unique DOI
+    expect(s2Integration.matchReferenceS2Batch).toHaveBeenCalledTimes(1)
+    expect(s2Integration.matchReferenceS2Batch).toHaveBeenCalledWith({
+      paperIds: ['DOI:10.1234/same']
+    })
   })
 
-  it('keeps different papers', () => {
-    const papers = [
-      { title: 'Attention Is All You Need' },
-      { title: 'BERT: Pre-training of Deep Bidirectional Transformers' },
-      { title: 'GPT-3: Language Models are Few-Shot Learners' }
-    ]
+  it('prevents concurrent executions with isRunning guard', async () => {
+    // Use delayed mocks to simulate async API calls
+    s2Integration.matchReferenceS2.mockImplementation((reference) => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const id = parseInt(reference.title.split('-')[1])
+          resolve({ corpusId: id, textAvailability: 'fulltext' })
+        }, 100)
+      })
+    })
 
-    const seen = new Set()
-    const unique = []
+    s2Integration.matchReferenceS2Batch.mockImplementation(({ paperIds }) => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const results = paperIds.map(id => ({
+            corpusId: parseInt(id.replace('DOI:', '')),
+            textAvailability: 'fulltext'
+          }))
+          resolve(results)
+        }, 100)
+      })
+    })
 
-    for (const paper of papers) {
-      const key = paper.title || ''
-      if (key && !seen.has(key)) {
-        seen.add(key)
-        unique.push(paper)
-      }
-    }
+    const container = document.getElementById('container')
+    const mockFindDoiEls = jest.fn().mockImplementation(() => [
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'ref-1' } },
+      { citeEl: container.appendChild(document.createElement('div')), reference: { title: 'ref-2' } },
+      { citeEl: container.appendChild(document.createElement('div')), doi: '100' },
+      { citeEl: container.appendChild(document.createElement('div')), doi: '200' }
+    ])
 
-    // All 3 papers are different
-    expect(unique).toHaveLength(3)
-    expect(seen.size).toBe(3)
-  })
+    // Start first execution
+    const promise1 = insertAstaBadges({ name: 'test', position: 'beforeend' }, mockFindDoiEls)
 
-  it('skips exact duplicate DOIs', () => {
-    const papers = [
-      { doi: '10.1234/test.doi' },
-      { doi: '10.1234/test.doi' }, // Exact duplicate
-      { doi: '10.5678/other.doi' }
-    ]
+    // Try to start second execution while first is running
+    const promise2 = insertAstaBadges({ name: 'test', position: 'beforeend' }, mockFindDoiEls)
 
-    const seen = new Set()
-    const unique = []
+    await Promise.all([promise1, promise2])
 
-    for (const paper of papers) {
-      const key = paper.doi || ''
-      if (key && !seen.has(key)) {
-        seen.add(key)
-        unique.push(paper)
-      }
-    }
-
-    expect(unique).toHaveLength(2)
-    expect(seen.size).toBe(2)
+    // Second call should be ignored due to isRunning guard
+    expect(s2Integration.matchReferenceS2).toHaveBeenCalledTimes(2)
+    expect(s2Integration.matchReferenceS2Batch).toHaveBeenCalledTimes(1)
   })
 })

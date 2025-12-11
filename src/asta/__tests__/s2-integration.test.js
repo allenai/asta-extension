@@ -5,7 +5,7 @@
 // Tests for Semantic Scholar API integration (s2-integration.js)
 // Covers: S2 API calls, identifier handling, showability checks
 
-import { matchReferenceS2, matchReferenceS2Batch, checkShowable, hasS2Prefix, extractArxivId, extractCorpusId } from '../s2-integration'
+import { matchReferenceS2, matchReferenceS2Batch, hasS2Prefix, extractArxivId, extractCorpusId } from '../s2-integration'
 
 // Mock browser.runtime for message passing
 global.browser = {
@@ -37,14 +37,6 @@ const s2BatchMock = [
     paperId: 'def456'
   }
 ]
-
-const showableTrueMock = {
-  showable: true
-}
-
-const showableFalseMock = {
-  showable: false
-}
 
 beforeEach(() => {
   browser.runtime.sendMessage.mockClear()
@@ -157,58 +149,6 @@ describe('matchReferenceS2Batch', () => {
 
     expect(result).toBeNull()
     expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
-  })
-})
-
-describe('checkShowable', () => {
-  it('returns showable true for valid corpusId', async () => {
-    browser.runtime.sendMessage.mockImplementation((request, callback) => {
-      callback({ ok: true, data: showableTrueMock })
-    })
-
-    const result = await checkShowable(123456)
-
-    expect(result).toEqual({ showable: true })
-    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
-    const call = browser.runtime.sendMessage.mock.calls[0][0]
-    expect(call.type).toBe('FETCH')
-    expect(call.url).toContain('mage.allen.ai/isShowable/123456')
-  })
-
-  it('returns showable false for restricted papers', async () => {
-    browser.runtime.sendMessage.mockImplementation((request, callback) => {
-      callback({ ok: true, data: showableFalseMock })
-    })
-
-    const result = await checkShowable(789012)
-
-    expect(result).toEqual({ showable: false })
-    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
-  })
-
-  it('returns null on API error', async () => {
-    browser.runtime.sendMessage.mockImplementation((request, callback) => {
-      callback({ ok: false, error: 'API error' })
-    })
-
-    const result = await checkShowable(123456)
-
-    expect(result).toBeNull()
-    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(2)
-  })
-
-  it('returns null with no corpusId', async () => {
-    const result = await checkShowable(null)
-
-    expect(result).toBeNull()
-    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
-  })
-
-  it('returns null with undefined corpusId', async () => {
-    const result = await checkShowable(undefined)
-
-    expect(result).toBeNull()
-    expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(0)
   })
 })
 
