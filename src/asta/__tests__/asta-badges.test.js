@@ -63,58 +63,30 @@ describe('createBadge', () => {
   })
 })
 
-describe('Badge showability filtering', () => {
-  it('should skip badges where showable is false', () => {
-    const badges = [
-      { corpusId: 123, showable: false },
-      { corpusId: 456, showable: true },
-      { corpusId: 789, showable: false }
+describe('textAvailability filtering', () => {
+  it('should only include papers with fulltext availability', () => {
+    const results = [
+      { corpusId: 123, textAvailability: 'fulltext' },
+      { corpusId: 456, textAvailability: 'abstract' },
+      { corpusId: 789, textAvailability: 'none' }
     ]
 
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
+    const filtered = results.filter(r => r.textAvailability === 'fulltext')
 
-    expect(filteredBadges).toHaveLength(1)
-    expect(filteredBadges[0].corpusId).toBe(456)
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0].corpusId).toBe(123)
   })
 
-  it('should include badges where showable is true', () => {
-    const badges = [
-      { corpusId: 123, showable: true },
-      { corpusId: 456, showable: true }
+  it('should exclude papers with no corpusId', () => {
+    const results = [
+      { corpusId: 123, textAvailability: 'fulltext' },
+      { corpusId: null, textAvailability: 'fulltext' },
+      { textAvailability: 'fulltext' }
     ]
 
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
+    const filtered = results.filter(r => r.corpusId && r.textAvailability === 'fulltext')
 
-    expect(filteredBadges).toHaveLength(2)
-  })
-
-  it('should include badges where showable is undefined', () => {
-    const badges = [
-      { corpusId: 123 },
-      { corpusId: 456, showable: true }
-    ]
-
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
-
-    expect(filteredBadges).toHaveLength(2)
-  })
-
-  it('should handle empty badge array', () => {
-    const badges = []
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
-
-    expect(filteredBadges).toHaveLength(0)
-  })
-
-  it('should handle all badges being non-showable', () => {
-    const badges = [
-      { corpusId: 123, showable: false },
-      { corpusId: 456, showable: false }
-    ]
-
-    const filteredBadges = badges.filter(badge => badge.showable !== false)
-
-    expect(filteredBadges).toHaveLength(0)
+    expect(filtered).toHaveLength(1)
   })
 })
 
@@ -185,5 +157,67 @@ describe('Deduplication logic', () => {
 
     expect(unique).toHaveLength(2)
     expect(seen.size).toBe(2)
+  })
+})
+
+describe('insertAstaBadges concurrency', () => {
+  const { insertAstaBadges } = require('../asta-badges')
+  const s2Integration = require('../s2-integration')
+
+  jest.mock('../s2-integration')
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    document.body.innerHTML = '<div id="container"></div>'
+
+    s2Integration.matchReferenceS2.mockImplementation((reference) => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const id = parseInt(reference.title.split('-')[1])
+          resolve({ corpusId: id, textAvailability: 'fulltext' })
+        }, 100)
+      })
+    })
+
+    s2Integration.matchReferenceS2Batch.mockImplementation(({ paperIds }) => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const results = paperIds.map(id => ({
+            corpusId: parseInt(id.replace('DOI:', '')),
+            textAvailability: 'fulltext'
+          }))
+          resolve(results)
+        }, 100)
+      })
+    })
+  })
+
+  it('prevents concurrent executions with isRunning guard', async () => {
+    const createMockEl = (id) => {
+      const el = document.createElement('div')
+      el.id = `cite-${id}`
+      document.getElementById('container').appendChild(el)
+      return el
+    }
+
+    const mockBadgeSite = { name: 'test-site', position: 'beforeend' }
+    const mockFindDoiEls = jest.fn().mockImplementation(() => [
+      { citeEl: createMockEl(1), reference: { title: 'ref-1' } },
+      { citeEl: createMockEl(2), reference: { title: 'ref-2' } },
+      { citeEl: createMockEl(3), doi: '100' },
+      { citeEl: createMockEl(4), doi: '200' }
+    ])
+
+    // Start first execution
+    const promise1 = insertAstaBadges(mockBadgeSite, mockFindDoiEls)
+
+    // Try to start second execution while first is running
+    const promise2 = insertAstaBadges(mockBadgeSite, mockFindDoiEls)
+
+    await Promise.all([promise1, promise2])
+
+    // Second call should be ignored due to isRunning guard
+    expect(s2Integration.matchReferenceS2).toHaveBeenCalledTimes(2)
+    expect(s2Integration.matchReferenceS2Batch).toHaveBeenCalledTimes(1)
   })
 })
