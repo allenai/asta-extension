@@ -11,7 +11,7 @@ export function createAstaBadge (corpusId) {
   return `
     <div class="asta-extension-badge">
       <a href="${buildAstaChatUrl(corpusId)}" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
-        <button style="padding: 4px 8px; color: #3ABA87; border: 1px solid #3ABA87; background-color: #ffffff; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
+        <button style="padding: 4px 8px; color: #ffffff; border: 1px solid #3ABA87; background-color: #3ABA87; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
           Ask AI about this paper
         </button>
       </a>

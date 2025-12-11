@@ -8,7 +8,7 @@ describe('createBadge', () => {
     return `
     <div>
       <a href="https://paperfigureqa.allen.ai/?corpus_id=${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
-        <button style="padding: 4px 8px; color: #3ABA87; border: 1px solid #3ABA87; background-color: #ffffff; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
+        <button style="padding: 4px 8px; color: #ffffff; border: 1px solid #3ABA87; background-color: #3ABA87; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
           Ask AI about this paper
         </button>
       </a>
@@ -44,8 +44,8 @@ describe('createBadge', () => {
   it('creates button with Asta brand styling', () => {
     const html = createBadge(123456)
 
-    expect(html).toContain('color: #3ABA87')
-    expect(html).toContain('border: 1px solid #3ABA87')
+    expect(html).toContain('color: #ffffff')
+    expect(html).toContain('background-color: #3ABA87')
   })
 
   it('opens link in new tab', () => {
