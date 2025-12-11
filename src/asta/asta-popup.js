@@ -6,7 +6,7 @@ import React from 'react'
 import { render } from 'react-dom'
 import HideableTally from '../components/HideableTally'
 import styles from './asta-popup.css' // Asta-specific styles (includes CSS-only arrow icons)
-import { matchReferenceS2Batch, checkShowable, extractArxivId, extractCorpusId } from './s2-integration'
+import { matchReferenceS2Batch, extractArxivId, extractCorpusId } from './s2-integration'
 
 // Base URL injected at build time based on TARGET environment variable
 const ASTA_UI_URL = process.env.ASTA_UI_URL
@@ -44,32 +44,32 @@ async function enhanceIdentifier (doi) {
 
 /**
  * Convert any identifier (DOI, ARXIV:, CorpusId:) to S2 corpusId
+ * Returns { corpusId, textAvailability } or null
  */
 async function convertToCorpusId (identifier) {
   if (!identifier) return null
 
-  // Already have corpusId
-  if (identifier.toLowerCase().startsWith('corpusid:')) {
-    const id = identifier.replace(/corpusid:/i, '')
-    return id
-  }
-
-  // Convert DOI or ARXIV to corpusId via S2 API
-  // S2 batch API accepts DOI:xxx or ARXIV:xxx format
+  // Already have corpusId - still need to fetch textAvailability from API
   let prefixedId = identifier
-  if (!identifier.includes(':') && identifier.startsWith('10.')) {
+  if (identifier.toLowerCase().startsWith('corpusid:')) {
+    prefixedId = identifier // Already in correct format
+  } else if (!identifier.includes(':') && identifier.startsWith('10.')) {
     // Plain DOI, add prefix
     prefixedId = `DOI:${identifier}`
   }
 
+  // Fetch paper data including textAvailability
   try {
     const result = await matchReferenceS2Batch({
-      paperIds: [prefixedId],
-      fields: 'corpusId'
+      paperIds: [prefixedId]
+      // Default fields now include textAvailability
     })
 
     if (result && result[0] && result[0].corpusId) {
-      return result[0].corpusId
+      return {
+        corpusId: result[0].corpusId,
+        textAvailability: result[0].textAvailability
+      }
     }
   } catch (e) {
     console.error('Failed to convert identifier to corpusId:', e)
@@ -134,19 +134,18 @@ export async function insertAstaPopup (doi) {
     return
   }
 
-  // Convert to corpusId
-  const corpusId = await convertToCorpusId(identifier)
+  // Convert to corpusId and get textAvailability in one API call
+  const result = await convertToCorpusId(identifier)
 
-  if (!corpusId) {
+  if (!result) {
     return
   }
 
-  // Check if Asta can show this paper
-  const result = await checkShowable(corpusId)
-  if (result && result.showable === false) {
+  // Only show popup for papers with full text available
+  if (result.textAvailability !== 'fulltext') {
     return
   }
 
   // Render the popup
-  renderAstaPopup(corpusId)
+  renderAstaPopup(result.corpusId)
 }
