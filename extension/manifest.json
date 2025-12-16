@@ -8,11 +8,7 @@
     "16": "images/icons/16.png",
     "32": "images/icons/32.png",
     "48": "images/icons/48.png",
-    "64": "images/icons/64.png",
-    "128": "images/icons/128.png",
-    "256": "images/icons/256.png",
-    "512": "images/icons/512.png",
-    "1024": "images/icons/1024.png"
+    "128": "images/icons/128.png"
   },
   "action": {
     "default_title": "Ask AI about a paper",
@@ -20,11 +16,7 @@
       "16": "images/icons/16.png",
       "32": "images/icons/32.png",
       "48": "images/icons/48.png",
-      "64": "images/icons/64.png",
-      "128": "images/icons/128.png",
-      "256": "images/icons/256.png",
-      "512": "images/icons/512.png",
-      "1024": "images/icons/1024.png"
+      "128": "images/icons/128.png"
     }
   },
   "content_scripts": [

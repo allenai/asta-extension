@@ -103,9 +103,9 @@ function renderAstaPopup (corpusId) {
         >
           <button style={{
             padding: '4px 8px',
-            color: '#f0529c',
-            border: '1px solid #f0529c',
-            backgroundColor: '#ffffff',
+            color: '#ffffff',
+            border: '1px solid #3ABA87',
+            backgroundColor: '#3ABA87',
             borderRadius: '4px',
             cursor: 'pointer',
             fontFamily: 'manrope, arial, sans-serif',
