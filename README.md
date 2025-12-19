@@ -1,22 +1,14 @@
 # Asta Extension
 
-The Asta extension is a fork of the [Scite extension](https://github.com/scitedotai/scite-extension).
+A fork of the [Scite extension](https://github.com/scitedotai/scite-extension) with Asta integration.
 
-## Publishing
+## Building
 
-Chrome store listings for developers: [Internal](https://chrome.google.com/webstore/devconsole/REDACTED_PUBLISHER_ID/chnledlomgnijcieoebgimaijdldckgb/edit/) and [Public](https://chrome.google.com/webstore/devconsole/REDACTED_PUBLISHER_ID/baigocfaeehaielhlieikbgahomikbdj/edit)
-  - Login info credentials are in the [1password vault](https://REDACTED_1PASS_LINK).
-  - Chrome store listings for users: [Internal](https://chromewebstore.google.com/detail/chnledlomgnijcieoebgimaijdldckgb) and [Public](https://chromewebstore.google.com/detail/baigocfaeehaielhlieikbgahomikbdj)
+Production builds require the `S2_API_URL` environment variable. Tests and dev builds work without it (uses public S2 API).
 
-We have not yet published to the Firefox store.
-Login credentials are also in the [1password vault](https://REDACTED_1PASS_LINK).
+For internal credentials and publishing instructions, see the 1Password vault.
 
-## Building for Release
-
-Production builds require the `S2_API_URL` environment variable (get in the [1Password vault](https://REDACTED_1PASS_LINK)). Tests and dev builds work without it.
-
-The remainder of the readme is the original readme from the Scite extension.
-See the details under the Releasing section for technical details on how to release the extension.
+---
 
 # Scite Badge and Extension #
 
@@ -186,12 +178,11 @@ $ npm run build
 $ zip -r extension.zip extension/*
 ```
 
-1. Login as REDACTED_EMAIL
-2. Go to the [developer dashboard](https://chrome.google.com/webstore/developer/dashboard)
-3. Click on the extension (if you do not see it check you are looking at the right `scite` publisher in the top right)
-4. Click `package` on the left
-5. Click upload new package
-6. Click submit for review
+1. Go to the [developer dashboard](https://chrome.google.com/webstore/developer/dashboard)
+2. Click on the extension (if you do not see it check you are looking at the right `scite` publisher in the top right)
+3. Click `package` on the left
+4. Click upload new package
+5. Click submit for review
 
 ### Firefox ###
 
