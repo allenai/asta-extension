@@ -53,7 +53,8 @@ module.exports = {
       filename: 'styles.css'
     }),
     new webpack.DefinePlugin({
-      'process.env.ASTA_UI_URL': JSON.stringify(config.ASTA_UI_URL)
+      'process.env.ASTA_UI_URL': JSON.stringify(config.ASTA_UI_URL),
+      'process.env.S2_API_URL': JSON.stringify(config.S2_API_URL)
     })
   ]
 }

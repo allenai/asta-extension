@@ -12,3 +12,4 @@ scite
 .envrc
 .mise.toml
 *.zip
+.env

@@ -11,6 +11,10 @@ Chrome store listings for developers: [Internal](https://chrome.google.com/webst
 We have not yet published to the Firefox store.
 Login credentials are also in the [1password vault](https://REDACTED_1PASS_LINK).
 
+## Building for Release
+
+Production builds require the `S2_API_URL` environment variable (get in the [1Password vault](https://REDACTED_1PASS_LINK)). Tests and dev builds work without it.
+
 The remainder of the readme is the original readme from the Scite extension.
 See the details under the Releasing section for technical details on how to release the extension.
 
