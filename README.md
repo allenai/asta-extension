@@ -11,6 +11,10 @@ Chrome store listings for developers: [Internal](https://chrome.google.com/webst
 We have not yet published to the Firefox store.
 Login credentials are also in the [1password vault](https://start.1password.com/open/i?a=DES74C5MCVDCTGGUDF3CJBUJC4&v=4736qu2dqfkjjxqs63w4c2gwt4&i=r6oobvmx2rfmnlekxuzansoqiu&h=allenai.1password.com).
 
+## Building for Release
+
+Production builds require the `S2_API_URL` environment variable (get in the [1Password vault](https://start.1password.com/open/i?a=DES74C5MCVDCTGGUDF3CJBUJC4&v=foju3b6opaf6pdzltnre3lxjkm&i=uqrep7k4xkjahog5ktoiffxhqi&h=allenai.1password.com)). Tests and dev builds work without it.
+
 The remainder of the readme is the original readme from the Scite extension.
 See the details under the Releasing section for technical details on how to release the extension.
 

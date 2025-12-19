@@ -58,7 +58,7 @@ describe('matchReferenceS2', () => {
     expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
     const call = browser.runtime.sendMessage.mock.calls[0][0]
     expect(call.type).toBe('FETCH')
-    expect(call.url).toContain('i13p7wsrzb.execute-api.us-west-2.amazonaws.com/prod/graph/v1/paper/search/match')
+    expect(call.url).toContain('/paper/search/match')
   })
 
   it('returns null when no results', async () => {
@@ -113,7 +113,7 @@ describe('matchReferenceS2Batch', () => {
     expect(browser.runtime.sendMessage).toHaveBeenCalledTimes(1)
     const call = browser.runtime.sendMessage.mock.calls[0][0]
     expect(call.type).toBe('FETCH')
-    expect(call.url).toContain('i13p7wsrzb.execute-api.us-west-2.amazonaws.com/prod/graph/v1/paper/batch')
+    expect(call.url).toContain('/paper/batch')
     expect(call.options).toMatchObject({
       method: 'POST',
       headers: expect.objectContaining({
