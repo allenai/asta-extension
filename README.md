@@ -4,7 +4,7 @@ A fork of the [Scite extension](https://github.com/scitedotai/scite-extension) w
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and upstream sync process.
 
-## Building
+## Building & Publishing
 
 Production builds require the `S2_API_URL` environment variable. Tests and dev builds work without it (uses public S2 API).
 

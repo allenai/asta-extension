@@ -1,7 +1,5 @@
 # Contributing
 
-This extension is a fork of [scite-extension](https://github.com/scitedotai/scite-extension).
-
 ## Upstream Sync
 
 1. Fetch and merge upstream:
@@ -11,6 +9,7 @@ This extension is a fork of [scite-extension](https://github.com/scitedotai/scit
    git merge upstream/master
    ```
 
-2. Resolve conflicts - keep ours for Asta-specific files (`src/asta/*`, `src/background.js`, `manifest.json`, etc.)
+2. Resolve conflicts:
+   - Keep ours: `manifest.json`, `src/index.js`, `src/badges.js`, `src/background.js`, `src/components/HideableTally.js`
 
 3. Create PR using **merge commit** (not squash) to preserve git history for future syncs
