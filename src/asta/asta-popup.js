@@ -7,6 +7,7 @@ import { render } from 'react-dom'
 import HideableTally from '../components/HideableTally'
 import styles from './asta-popup.css' // Asta-specific styles (includes CSS-only arrow icons)
 import { matchReferenceS2Batch, extractArxivId, extractCorpusId } from './s2-integration'
+import { getStorageItem, setStorageItem } from '../index'
 
 // Base URL injected at build time based on TARGET environment variable
 const ASTA_UI_URL = process.env.ASTA_UI_URL
@@ -81,7 +82,7 @@ async function convertToCorpusId (identifier) {
 /**
  * Render the Asta popup button
  */
-function renderAstaPopup (corpusId) {
+async function renderAstaPopup (corpusId) {
   if (poppedUp) {
     return
   }
@@ -91,9 +92,14 @@ function renderAstaPopup (corpusId) {
   popup.scrolling = 'no'
   popup.className = styles.astaPopup
 
+  const shouldHide = await getStorageItem('hidePopup') || false
+
   document.documentElement.appendChild(popup)
   render(
-    <HideableTally>
+    <HideableTally
+      hide={shouldHide}
+      clickFn={() => setStorageItem({ hidePopup: !shouldHide })}
+    >
       <div style={{ maxWidth: '200px', padding: '8px' }}>
         <a
           href={buildAstaChatUrl(corpusId)}
@@ -147,5 +153,5 @@ export async function insertAstaPopup (doi) {
   }
 
   // Render the popup
-  renderAstaPopup(result.corpusId)
+  await renderAstaPopup(result.corpusId)
 }
