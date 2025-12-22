@@ -1,9 +1,9 @@
 {
   "name": "Asta",
   "author": "Allen Institute for AI",
-  "version": "0.0.12",
+  "version": "0.1.0",
   "manifest_version": 3,
-  "description": "Extension that detects papers as you browse, adding buttons to ask questions and chat about them with AI powered by Asta from Ai2",
+  "description": "Detects papers as you browse and lets you chat with AI about them—grounded in the actual content, powered by Asta from Ai2",
   "icons": {
     "16": "images/icons/16.png",
     "32": "images/icons/32.png",
@@ -51,6 +51,6 @@
   ],
   "host_permissions": [
     "https://api.semanticscholar.org/*",
-    "https://*.allen.ai/*"
+    "https://asta-tools.allen.ai/*"
   ]
 }
