@@ -1,40 +1,22 @@
 // Semantic Scholar API integration and identifier handling
+// Uses global `browser` set by index.js polyfill (Chrome) or native (Firefox)
 
-/* global chrome, browser */
+/* global browser */
 
 const S2_API_URL = process.env.S2_API_URL
-
-// Get browser API - works in Chrome and tests (Firefox untested)
-const getBrowserAPI = () => {
-  // In tests: global.browser
-  if (typeof global !== 'undefined' && global.browser) {
-    return global.browser
-  }
-  // In Firefox: native browser API (untested)
-  if (typeof browser !== 'undefined') {
-    return browser
-  }
-  // In Chrome: chrome API
-  if (typeof chrome !== 'undefined') {
-    return chrome
-  }
-  throw new Error('No browser API found')
-}
 
 // Helper to use background script for fetching (CORS workaround)
 // Content scripts can't use host_permissions in Manifest V3
 const bgFetch = async (url, options = {}, retries = 1) => {
-  const browserAPI = getBrowserAPI()
-
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await new Promise((resolve, reject) => {
-        browserAPI.runtime.sendMessage(
+        browser.runtime.sendMessage(
           { type: 'FETCH', url, options },
           (response) => {
             // Check for runtime errors first
-            if (browserAPI.runtime.lastError) {
-              reject(new Error(`Runtime error: ${browserAPI.runtime.lastError.message}`))
+            if (browser.runtime.lastError) {
+              reject(new Error(`Runtime error: ${browser.runtime.lastError.message}`))
               return
             }
             // Check if response exists (sendMessage failed)
