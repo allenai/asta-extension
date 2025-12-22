@@ -13,3 +13,4 @@ scite
 .mise.toml
 *.zip
 .env
+.claude/

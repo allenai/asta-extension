@@ -1,7 +1,7 @@
 {
   "name": "asta-extension",
-  "version": "0.0.12",
-  "description": "Extension that detects papers as you browse, adding buttons to ask questions and chat about them with AI powered by Asta from Ai2",
+  "version": "0.1.0",
+  "description": "Detects papers as you browse and lets you chat with AI about them—grounded in the actual content, powered by Asta from Ai2",
   "main": "index.js",
   "scripts": {
     "lint": "standard --verbose | snazzy && stylelint 'src/**/*.css'",
