@@ -17,7 +17,7 @@ export const matchReference = async ({
   })
   url.search = params.toString()
   try {
-    const result = await fetch(url.href)
+    const result = await fetch(url)
     const data = await result.json()
     return data
   } catch (e) {
