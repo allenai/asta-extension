@@ -15,14 +15,12 @@ if (typeof chrome !== 'undefined' && chrome) {
   window.browser = chrome // eslint-disable-line no-unused-vars
 }
 
-// eslint-disable-next-line no-unused-vars
-const getStorageItem = async (key) => {
+export const getStorageItem = async (key) => {
   const storage = await new Promise(resolve => browser.storage.local.get(key, resolve))
   return storage[key]
 }
 
-// eslint-disable-next-line no-unused-vars
-const setStorageItem = (key) => {
+export const setStorageItem = (key) => {
   browser.storage.local.set(key)
 }
 
