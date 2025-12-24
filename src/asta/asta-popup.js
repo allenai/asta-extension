@@ -8,6 +8,7 @@ import HideableTally from '../components/HideableTally'
 import styles from './asta-popup.css' // Asta-specific styles (includes CSS-only arrow icons)
 import { matchReferenceS2Batch, extractArxivId, extractCorpusId } from './s2-integration'
 import { getStorageItem, setStorageItem } from '../index'
+import { ASTA_BUTTON_STYLES, ASTA_LINK_STYLES } from './asta-styles'
 
 // Base URL injected at build time based on TARGET environment variable
 const ASTA_UI_URL = process.env.ASTA_UI_URL
@@ -100,24 +101,14 @@ async function renderAstaPopup (corpusId) {
       hide={shouldHide}
       clickFn={() => setStorageItem({ hidePopup: !shouldHide })}
     >
-      <div style={{ maxWidth: '200px', padding: '8px' }}>
+      <div style={{ padding: '8px' }}>
         <a
           href={buildAstaChatUrl(corpusId)}
           target='_blank'
           rel='noopener noreferrer'
-          style={{ textDecoration: 'none' }}
+          style={ASTA_LINK_STYLES}
         >
-          <button style={{
-            padding: '4px 8px',
-            color: '#ffffff',
-            border: '1px solid #3ABA87',
-            backgroundColor: '#3ABA87',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontFamily: 'manrope, arial, sans-serif',
-            fontSize: '14px'
-          }}
-          >
+          <button style={ASTA_BUTTON_STYLES}>
             Ask AI about this paper
           </button>
         </a>

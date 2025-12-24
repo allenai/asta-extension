@@ -1,6 +1,7 @@
 // Asta "Ask about this paper" badge integration
 import { matchReferenceS2, matchReferenceS2Batch } from './s2-integration'
 import { sliceIntoChunks } from '../util'
+import { ASTA_BUTTON_STYLE_STRING, ASTA_LINK_STYLE_STRING } from './asta-styles'
 
 // Base URL injected at build time based on TARGET environment variable
 const ASTA_UI_URL = process.env.ASTA_UI_URL
@@ -9,9 +10,9 @@ const buildAstaChatUrl = (corpusId) => `${ASTA_UI_URL}/?corpus_id=${corpusId}&ut
 
 export function createAstaBadge (corpusId) {
   return `
-    <div class="asta-extension-badge">
-      <a href="${buildAstaChatUrl(corpusId)}" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
-        <button style="padding: 4px 8px; color: #ffffff; border: 1px solid #3ABA87; background-color: #3ABA87; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
+    <div class="asta-extension-badge" style="padding-top:8px;">
+      <a href="${buildAstaChatUrl(corpusId)}" target="_blank" style="${ASTA_LINK_STYLE_STRING}">
+        <button style="${ASTA_BUTTON_STYLE_STRING}">
           Ask AI about this paper
         </button>
       </a>
