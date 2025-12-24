@@ -48,3 +48,22 @@
   content: "\e925"; /* left-caret matching scite original */
   color: #82807d;
 }
+
+/* Reduce hide button clickable area - prevent accidental clicks */
+.astaPopup [class*="tally"] {
+  cursor: default;
+}
+
+.astaPopup [class*="tally"]:hover {
+  background-color: white;
+}
+
+.astaPopup [class*="hideContainer"] {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.astaPopup [class*="logoContainer"] {
+  cursor: pointer;
+}
+

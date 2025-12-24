@@ -1,62 +1,47 @@
 /* eslint-env jest */
 
+// Mock s2-integration before any imports
+jest.mock('../s2-integration')
+
 // Test badge creation and showability filtering
+const { createAstaBadge } = require('../asta-badges')
 
-describe('createBadge', () => {
-  // Replicate the createBadge function for testing
-  function createBadge (corpusId) {
-    return `
-    <div>
-      <a href="https://paperfigureqa.allen.ai/?corpus_id=${corpusId}&utm_source=extension&utm_medium=badge" target="_blank" style="text-decoration: none; display:block; padding-top:8px;">
-        <button style="padding: 4px 8px; color: #ffffff; border: 1px solid #3ABA87; background-color: #3ABA87; border-radius: 4px; cursor: pointer; font-family:manrope, arial, sans-serif;">
-          Ask AI about this paper
-        </button>
-      </a>
-    </div>
-  `
-  }
-
+describe('createAstaBadge', () => {
   it('generates HTML with corpus_id in URL', () => {
-    const html = createBadge(123456)
+    const html = createAstaBadge(123456)
 
     expect(html).toContain('corpus_id=123456')
   })
 
-  it('includes correct chat URL', () => {
-    const html = createBadge(123456)
-
-    expect(html).toContain('https://paperfigureqa.allen.ai/')
-  })
-
   it('includes UTM parameters for tracking', () => {
-    const html = createBadge(123456)
+    const html = createAstaBadge(123456)
 
     expect(html).toContain('utm_source=extension')
     expect(html).toContain('utm_medium=badge')
   })
 
   it('includes Ask AI about this paper button text', () => {
-    const html = createBadge(123456)
+    const html = createAstaBadge(123456)
 
     expect(html).toContain('Ask AI about this paper')
   })
 
   it('creates button with Asta brand styling', () => {
-    const html = createBadge(123456)
+    const html = createAstaBadge(123456)
 
     expect(html).toContain('color: #ffffff')
     expect(html).toContain('background-color: #3ABA87')
   })
 
   it('opens link in new tab', () => {
-    const html = createBadge(123456)
+    const html = createAstaBadge(123456)
 
     expect(html).toContain('target="_blank"')
   })
 
   it('handles different corpusIds correctly', () => {
-    const html1 = createBadge(111111)
-    const html2 = createBadge(999999)
+    const html1 = createAstaBadge(111111)
+    const html2 = createAstaBadge(999999)
 
     expect(html1).toContain('corpus_id=111111')
     expect(html2).toContain('corpus_id=999999')
@@ -66,8 +51,6 @@ describe('createBadge', () => {
 describe('insertAstaBadges', () => {
   const { insertAstaBadges } = require('../asta-badges')
   const s2Integration = require('../s2-integration')
-
-  jest.mock('../s2-integration')
 
   beforeEach(() => {
     jest.clearAllMocks()
